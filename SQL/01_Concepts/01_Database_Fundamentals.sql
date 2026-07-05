@@ -309,3 +309,691 @@ select 'shiva' as static_value
 -- we can combine static and the table columns also 
 
 select first_name, country, 'shiva' from customers -- we see that 'shiva' value is shown for all the rows
+
+
+
+
+
+
+------------ FORMATED NOTES ------------------ 
+# Day 1 – SQL Fundamentals
+
+## Learning Objectives
+
+After completing this chapter, you should understand:
+
+- What Data is
+- What a Database is
+- What DBMS is
+- Difference between Database and DBMS
+- Relational vs Non-Relational Databases
+- Database Structure
+- Datatypes
+- SQL Command Categories
+- SQL Query Execution Order
+- SELECT
+- WHERE
+- ORDER BY
+- GROUP BY
+- HAVING
+- DISTINCT
+- TOP / LIMIT
+- Aggregate Functions
+
+---
+
+# 1. What is Data?
+
+## Definition
+
+Data is any piece of information that can be stored and processed.
+
+Examples:
+
+- Customer Name
+- Phone Number
+- Email Address
+- Salary
+- Product Price
+- Order Date
+
+Everything that represents information is called **Data**.
+
+---
+
+## Why is Data Important?
+
+Every company makes decisions based on data.
+
+Examples:
+
+- Amazon stores customer orders.
+- Netflix stores watch history.
+- Swiggy stores delivery information.
+- Banks store transaction history.
+
+Without data, businesses cannot operate effectively.
+
+---
+
+# 2. What is a Database?
+
+## Definition
+
+A Database is an organized collection of data that allows information to be stored, managed and retrieved efficiently.
+
+Instead of storing information in multiple Excel files or text documents, companies store it inside databases.
+
+---
+
+## Why Do We Need Databases?
+
+Imagine an online shopping company with:
+
+- 20 million customers
+- 500 million orders
+- Thousands of products
+
+Searching through Excel files would be extremely slow.
+
+Databases solve this problem by organizing data for fast retrieval and management.
+
+---
+
+## Real World Example
+
+Amazon cannot store millions of customer orders in Excel files.
+
+Instead, customer information, products and orders are stored inside databases where they can be searched within milliseconds.
+
+---
+
+# 3. What is DBMS?
+
+## Definition
+
+DBMS (Database Management System) is software that manages communication between users/applications and the database.
+
+Examples:
+
+- PostgreSQL
+- MySQL
+- SQL Server
+- Oracle Database
+
+A DBMS is **not** the database itself.
+
+It is the software that controls the database.
+
+---
+
+## Why Do We Need a DBMS?
+
+Many users may access the database simultaneously.
+
+For example:
+
+- Website
+- Mobile App
+- Power BI Dashboard
+- Data Analyst
+- Backend Developers
+
+The DBMS manages all incoming requests and safely communicates with the database.
+
+---
+
+## How DBMS Works
+
+```
+User
+      │
+      ▼
+SQL Query
+      │
+      ▼
+DBMS
+      │
+      ▼
+Database
+      │
+      ▼
+Results
+```
+
+---
+
+## Business Perspective
+
+Without a DBMS:
+
+- Multiple users could overwrite each other's data.
+- Requests would conflict.
+- Data consistency would be difficult to maintain.
+
+The DBMS ensures reliable and secure access to data.
+
+---
+
+# 4. Database vs DBMS
+
+| Database | DBMS |
+|------------|----------------------------|
+| Stores data | Manages the stored data |
+| Passive storage | Active software |
+| Contains tables | Executes SQL queries |
+| Cannot manage users | Handles users and permissions |
+
+---
+
+# 5. Relational Database (RDBMS)
+
+## Definition
+
+A Relational Database stores information in multiple related tables.
+
+Instead of storing everything in one large table, data is divided into logical tables.
+
+Example:
+
+Customer Table
+
+| CustomerID | Name |
+|------------|------|
+
+Orders Table
+
+| OrderID | CustomerID |
+
+The CustomerID creates the relationship.
+
+---
+
+## Why Multiple Tables?
+
+Suppose one customer places 500 orders.
+
+If customer details are repeated in every row:
+
+- Storage increases
+- Updates become difficult
+- Duplicate information grows
+
+Using relationships avoids redundancy and keeps the database organized.
+
+---
+
+# 6. Database Structure
+
+```
+Server
+   │
+Database
+   │
+Schema
+   │
+Tables
+   │
+Rows & Columns
+```
+
+### Server
+
+The physical or cloud machine where databases are stored.
+
+### Database
+
+A collection of related data.
+
+### Schema
+
+A logical grouping of related tables.
+
+Example:
+
+Sales Schema
+
+- Customers
+- Orders
+- Products
+
+### Table
+
+Stores related information.
+
+### Row
+
+One complete record.
+
+### Column
+
+One attribute of the record.
+
+---
+
+# 7. Datatypes
+
+| Datatype | Purpose | Example |
+|------------|----------------|----------------|
+| INT | Whole Numbers | 25 |
+| DECIMAL | Decimal Numbers | 99.99 |
+| CHAR | Fixed Length Text | M, F, USD |
+| VARCHAR | Variable Length Text | Customer Name |
+| DATE | Date | 2026-07-05 |
+| DATETIME | Date & Time | 2026-07-05 10:30 |
+
+---
+
+## CHAR vs VARCHAR
+
+### CHAR
+
+Stores fixed-length values.
+
+Example
+
+```
+CHAR(3)
+
+IND
+USA
+```
+
+Always reserves space for three characters.
+
+Best for:
+
+- Gender
+- Country Code
+- Currency Code
+
+---
+
+### VARCHAR
+
+Stores only the required number of characters.
+
+Best for:
+
+- Names
+- Addresses
+- Emails
+
+Because different values have different lengths.
+
+---
+
+## Best Practice
+
+Use CHAR only when the length is always fixed.
+
+Use VARCHAR for most text columns.
+
+---
+
+# 8. SQL Command Categories
+
+| Category | Commands | Purpose |
+|-----------|----------|----------|
+| DQL | SELECT | Retrieve Data |
+| DDL | CREATE ALTER DROP | Structure |
+| DML | INSERT UPDATE DELETE | Data Manipulation |
+| DCL | GRANT REVOKE | Permissions |
+| TCL | COMMIT ROLLBACK SAVEPOINT | Transactions |
+
+---
+
+# 9. SQL Query Execution Order
+
+Although SQL is written like this:
+
+```
+SELECT
+FROM
+WHERE
+GROUP BY
+HAVING
+ORDER BY
+LIMIT
+```
+
+Internally SQL executes like this:
+
+```
+FROM
+
+↓
+
+WHERE
+
+↓
+
+GROUP BY
+
+↓
+
+HAVING
+
+↓
+
+SELECT
+
+↓
+
+DISTINCT
+
+↓
+
+ORDER BY
+
+↓
+
+LIMIT
+```
+
+Understanding this order explains many SQL errors.
+
+---
+
+# 10. SELECT
+
+## Purpose
+
+Retrieves data from a table.
+
+Example
+
+```sql
+SELECT *
+FROM customers;
+```
+
+---
+
+## Best Practice
+
+Avoid
+
+```sql
+SELECT *
+```
+
+Instead
+
+```sql
+SELECT
+customer_name,
+country
+FROM customers;
+```
+
+Selecting only required columns improves readability and performance.
+
+---
+
+## Business Example
+
+Marketing wants only customer names and countries.
+
+There is no reason to retrieve every column from the table.
+
+---
+
+# 11. WHERE
+
+## Purpose
+
+Filters rows before any grouping happens.
+
+Example
+
+```sql
+SELECT *
+FROM customers
+WHERE country = 'Germany';
+```
+
+---
+
+## Business Example
+
+A manager asks:
+
+"Show only German customers."
+
+WHERE filters the dataset before analysis begins.
+
+---
+
+# 12. ORDER BY
+
+## Purpose
+
+Sorts the final output.
+
+```sql
+SELECT *
+FROM customers
+ORDER BY score DESC;
+```
+
+---
+
+## Multiple ORDER BY
+
+```sql
+ORDER BY country ASC,
+         score DESC;
+```
+
+SQL sorts by Country first.
+
+Within each country it sorts by Score.
+
+---
+
+## Business Example
+
+Top customers by revenue.
+
+Newest orders.
+
+Highest sales.
+
+Lowest inventory.
+
+---
+
+# 13. GROUP BY
+
+## Purpose
+
+Groups similar rows together so aggregate calculations can be performed.
+
+Example
+
+```sql
+SELECT
+country,
+SUM(score)
+FROM customers
+GROUP BY country;
+```
+
+---
+
+## Business Thinking
+
+Managers rarely need every individual transaction.
+
+They usually ask:
+
+- Revenue by Country
+- Revenue by Month
+- Orders by Product
+- Customers by City
+
+GROUP BY converts raw data into business summaries.
+
+---
+
+## Rule
+
+Every selected column must either:
+
+- appear inside GROUP BY
+
+OR
+
+- be used inside an aggregate function.
+
+---
+
+# 14. Aggregate Functions
+
+Common aggregate functions
+
+```
+COUNT()
+
+SUM()
+
+AVG()
+
+MAX()
+
+MIN()
+```
+
+These calculate values for each group.
+
+---
+
+# 15. HAVING
+
+## Purpose
+
+Filters grouped results.
+
+Example
+
+```sql
+SELECT
+country,
+SUM(score)
+FROM customers
+GROUP BY country
+HAVING SUM(score) > 700;
+```
+
+---
+
+## WHERE vs HAVING
+
+WHERE
+
+↓
+
+Filters individual rows
+
+HAVING
+
+↓
+
+Filters grouped results
+
+---
+
+# 16. DISTINCT
+
+Removes duplicate values.
+
+```sql
+SELECT DISTINCT country
+FROM customers;
+```
+
+Useful when only unique values are required.
+
+---
+
+# 17. TOP / LIMIT
+
+Restricts the number of rows returned.
+
+SQL Server
+
+```sql
+SELECT TOP 5 *
+FROM customers;
+```
+
+PostgreSQL / MySQL
+
+```sql
+SELECT *
+FROM customers
+LIMIT 5;
+```
+
+---
+
+# 18. Professional Best Practices
+
+✅ Avoid SELECT *
+
+✅ Write readable SQL
+
+✅ Use aliases
+
+✅ Select only required columns
+
+✅ Format SQL consistently
+
+✅ Understand execution order
+
+---
+
+# 19. Common Beginner Mistakes
+
+❌ Using HAVING instead of WHERE
+
+❌ Forgetting GROUP BY rules
+
+❌ Using SELECT *
+
+❌ Confusing Database with DBMS
+
+❌ Not understanding SQL execution order
+
+---
+
+# 20. Interview Tips
+
+Be prepared to answer:
+
+- What is SQL?
+- Difference between Database and DBMS?
+- Difference between WHERE and HAVING?
+- Difference between CHAR and VARCHAR?
+- Why do companies use databases?
+- Why should SELECT * be avoided?
+- Explain GROUP BY with an example.
+
+---
+
+# 21. Key Takeaways
+
+- Data is raw information.
+- Databases organize and store data.
+- DBMS manages access to databases.
+- SQL communicates with databases.
+- RDBMS stores data in related tables.
+- SELECT retrieves data.
+- WHERE filters rows.
+- GROUP BY summarizes data.
+- HAVING filters grouped results.
+- ORDER BY sorts data.
+- DISTINCT removes duplicates.
+- LIMIT/TOP restricts returned rows.
+
