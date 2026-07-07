@@ -180,8 +180,177 @@ id | first_name | country | score | order_id | customer_id | order_date | sales
 -- so here also we dont have any special command for right anti join so we use the right join
 
 
--- get all the orders without matching customers
-select * from orders left join customers on orders.customer_id = customers.id 
+-- SQL TASK: get all the orders without matching customers
+-- so first we combine the data and then we filter it so we got the right join 
+select * from customers right join orders on customers.id = orders.customer_id 
 
--- this will give the right join but we want right anti join so we use where clause
- select * from orders left join customers on orders.customer_id = customers.id where customers.id is null
+-- now we will use the right join but we want right anti join so we use where clause
+select * from customers right join orders on customers.id = orders.customer_id where customers.id is null
+
+
+-- USING IT WITH LEFT JOIN
+select * from orders left join customers on orders.customer_id = customers.id where customers.id is null
+
+-- o/p:
+|order_id | customer_id | order_date | sales | id   | first_name | country | score |
+| -------: | ----------: | ---------- | ----: | ---- | ---------- | ------- | ----: |
+|     1004 |           6 | 2021-08-31 |    10 | NULL | NULL       | NULL    |  NULL |
+
+
+
+
+-- FULL ANTI JOIN
+-- it shows only the unmatching rows from both tables
+-- it is opposite of inner join
+-- so inner join will show the matching data from both tables so now for full anti join we want the unmatching data 
+-- so we here we dont have a command like full anti join, instead we will use the full join with where clause
+-- so we want to see only the unmatching data 
+
+
+-- SQL TASK: find all the customers without orders and orders without customers
+-- so now first we use the full join and next we use the where clause to get full anti join
+select * from customers full join orders on customers.id = orders.customer_id 
+
+
+-- using where clause with full join to get full anti join 
+select * from customers full join orders on customers.id = orders.customer_id where customers.id is null or orders.customer_id is null
+
+-- o/p:
+| customers.id | first_name | country | score | order_id | customer_id | order_date | sales |
+| ------------ | ---------- | ------- | ----- | -------- | ----------- | ---------- | ----- |
+| 4            | Martin     | Germany | 500   | NULL     | NULL        | NULL       | NULL  |
+| 5            | Peter      | USA     | 0     | NULL     | NULL        | NULL       | NULL  |
+| NULL         | NULL       | NULL    | NULL  | 1004     | 6           | 2021-08-31 | 10    |
+
+
+
+-- IMPORTANT QUESTION
+-- Q. WHY WE HAVE TO USE OR OPERATOR INSTEAD OF AND OPERATOR ?
+-- because of full join, so what full join does get all data from left table and all data from right table
+-- and matching data from both tables and it excludes all the unmatching data in the same row 
+-- so while using full join we dont have the unmatching rows in the table 
+-- so since the and operator only shows the data when both conditions are true which means on both sides the data to be unmatched which is not possible in full join
+-- so we will use or operator so that we can get all the unmatching data from both tables but not in the same row 
+
+
+-- Q. SINCE THE FULL ANTI JOIN IS OPPOSITE TO INNER JOIN WHY CANT WE USE THE WHERE CLAUSE USING INNER JOIN ? 
+-- since the inner join removes all the unmatching data from both tables after join so we dont have the data 
+-- of unmatching data inside the tables so using where clause with inner join will give us empty data 
+
+
+
+
+
+-- SQL TASK: get only the customers who have placed the orders without using inner join 
+-- so to find the customers who have not placed an order we used where customers.id is null 
+-- so to find the customers who placed an order then we use not operator
+select * from customers left join orders on customers.id = orders.customer_id where orders.customer_id is not null
+
+-- o/p:
+| id | first_name | country | score | order_id | customer_id | order_date | sales |
+| -: | ---------- | ------- | ----: | -------: | ----------: | ---------- | ----: |
+|  1 | Maria      | Germany |   350 |     1001 |           1 | 2021-01-11 |    35 |
+|  2 | John       | USA     |   900 |     1002 |           2 | 2021-04-05 |    15 |
+|  3 | Georg      | UK      |   750 |     1003 |           3 | 2021-06-18 |    20 |
+
+-- now we got the customers who placed the orders
+
+
+
+
+-- CROSS JOIN
+-- it combines all the left table data with all the right table data each and every row
+-- we dont need the condition for this like matching with the column because it combines everything in both side
+-- like it shows all possible combinations
+-- so one row in the left table will be combined with all rows in the righ table 
+-- NOTE: if we have null values in the table then they are ignored, because a null value is unknown value so it cannot be compared with another value 
+
+
+-- SQL TASK: find all possible combinations from customers and orders
+select * from customers cross join orders
+
+-- o/p:
+| id | first_name | country | score | order_id | customer_id | order_date | sales |
+| -: | ---------- | ------- | ----: | -------: | ----------: | ---------- | ----: |
+|  1 | Maria      | Germany |   350 |     1001 |           1 | 2021-01-11 |    35 |
+|  2 | John       | USA     |   900 |     1001 |           1 | 2021-01-11 |    35 |
+|  3 | Georg      | UK      |   750 |     1001 |           1 | 2021-01-11 |    35 |
+|  4 | Martin     | Germany |   500 |     1001 |           1 | 2021-01-11 |    35 |
+|  5 | Peter      | USA     |     0 |     1001 |           1 | 2021-01-11 |    35 |
+|  1 | Maria      | Germany |   350 |     1002 |           2 | 2021-04-05 |    15 |
+|  2 | John       | USA     |   900 |     1002 |           2 | 2021-04-05 |    15 |
+|  3 | Georg      | UK      |   750 |     1002 |           2 | 2021-04-05 |    15 |
+|  4 | Martin     | Germany |   500 |     1002 |           2 | 2021-04-05 |    15 |
+|  5 | Peter      | USA     |     0 |     1002 |           2 | 2021-04-05 |    15 |
+|  1 | Maria      | Germany |   350 |     1003 |           3 | 2021-06-18 |    20 |
+|  2 | John       | USA     |   900 |     1003 |           3 | 2021-06-18 |    20 |
+|  3 | Georg      | UK      |   750 |     1003 |           3 | 2021-06-18 |    20 |
+|  4 | Martin     | Germany |   500 |     1003 |           3 | 2021-06-18 |    20 |
+|  5 | Peter      | USA     |     0 |     1003 |           3 | 2021-06-18 |    20 |
+|  1 | Maria      | Germany |   350 |     1004 |           6 | 2021-08-31 |    10 |
+|  2 | John       | USA     |   900 |     1004 |           6 | 2021-08-31 |    10 |
+|  3 | Georg      | UK      |   750 |     1004 |           6 | 2021-08-31 |    10 |
+|  4 | Martin     | Germany |   500 |     1004 |           6 | 2021-08-31 |    10 |
+|  5 | Peter      | USA     |     0 |     1004 |           6 | 2021-08-31 |    10 |
+
+
+-- How many rows does a CROSS JOIN return?
+select (select count(id) from customers) as customers_count , 
+       (select count(order_id) from orders) as orders_count,
+       ((select count(id) from customers) * (select count(order_id) from orders)) as cross_join_count
+
+
+
+
+-- MULTI TABLE JOINS
+-- we can combine multiple tables using multi joins to retrieve the data from multiple tables to get meaningful information and to get extra information
+-- so to combine multiple tables we can follow these ways 
+-- 1. identifying the main table so that we can connect the other tables to this main table when we want all the data from main table to show without missing anything
+-- so we can use left join it will not miss anything from the main table
+-- 2. we can combine multiple tables with multiple joins also on the basis of the data we want to find
+-- 3. when we are taking about a table we can identify them whether this can be a main table or this data we want to till all the joins then we can treat that table as main table 
+
+
+-- we are now using the salesDB
+use SalesDB;
+
+
+
+select * from sales.customers
+
+select * from sales.employees
+
+select * from sales.orders
+
+select * from sales.ordersarchive
+
+select * from sales.products
+
+
+
+-- SQL TASK
+-- using salesdb retrieve list of orders along with the related customers, product, and employee details
+-- for each order display
+-- order id
+-- customer name
+-- product name
+-- sales
+-- product price
+-- salesperson name
+
+-- so here we can treat orders as main table, because we are taking about the orders and we dont want to miss any orders data 
+-- then we will use the left join and combine the other tables using left join to the main table which is orders 
+select 
+orderID, 
+c.FirstName as customer_firstname,
+c.LastName as customer_lastname,
+p.Product as product_name,
+o.Sales,
+p.Price as product_price,
+e.FirstName as emp_firstname,
+e.LastName as emp_lastname
+from sales.orders as o
+left join sales.customers as c on o.CustomerID = c.CustomerID
+left join sales.Products as p on o.ProductID = p.ProductID
+left join sales.Employees as e on o.SalesPersonID = e.EmployeeID
+
