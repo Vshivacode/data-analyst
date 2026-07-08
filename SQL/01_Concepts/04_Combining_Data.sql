@@ -354,3 +354,188 @@ left join sales.customers as c on o.CustomerID = c.CustomerID
 left join sales.Products as p on o.ProductID = p.ProductID
 left join sales.Employees as e on o.SalesPersonID = e.EmployeeID
 
+
+
+-- SET operations
+-- it combines the tables in row wise while the joins combine the tables in column wise 
+-- we can use the set operators with two or more select statements 
+
+-- there are 4 types of set operations
+-- 1. union
+-- 2. union all
+-- 3. intersect 
+-- 4. except
+
+-- Rules must to follow while using the set operators
+-- 1. order by clause can only be used once at the end of the query to sort the final result, cannot be used in each select query
+select firstname, lastname from sales.customers			
+union													 
+select lastname, firstname from sales.employees	
+order by FirstName;     -- so we will use only order by clause and that to at the end of the query not in the middle
+
+
+-- 2. both select queries need to have same number of columns
+select FirstName, LastName from sales.Customers   -- here we have 2 columns
+union
+select FirstName, LastName from sales.Employees   -- here we have 2 columns
+
+
+-- 3. both select queries need to have same datatypes columns
+select FirstName, LastName from sales.Customers   -- here we have varchar data type
+union
+select FirstName, LastName from sales.Employees   -- here we have varchar data type
+
+select FirstName from sales.Customers  -- here we have varchar data type
+union
+select month from sales.monthly_sales  -- here we have varchar data type
+
+-- the below query is wrong, because first select query and second select query datatypes doesnt match
+select FirstName, LastName from sales.Customers   -- here we have varchar data type 
+union
+select BirthDate, Gender from sales.Employees   -- here we have date() and char() data type
+
+
+-- 4. follow same order of columns and the data types  
+-- if we change the order of the columns then it will throw error because 
+select FirstName, score from sales.Customers   -- here we have first varchar() and second int() data type 
+union
+select Salary, LastName from sales.Employees   -- here we have first int() and second varchar() data type
+
+-- so it must follow the same order also 
+select FirstName, score from sales.Customers   -- here we have first varchar() and second int() data type 
+union
+select LastName, Salary from sales.Employees   -- here we have first varchar() and second int() data type 
+
+
+-- 5. first query have the control of column names so if we want to change/using alias then we do in the first query because the second query is ignored by sql
+select FirstName, score from sales.Customers   -- here we have firstname and score columns
+union
+select LastName, Salary from sales.Employees   -- here we have lastname and salary columns
+-- so now sql will take the first select query column names to show in the result table like this 
+
+-- o/p:
+| FirstName   | score |      -- here we see that the columns are same as the first select query 
+| ------      | ----: |
+| NULL        | 75000 |
+| Jossef      |   350 |
+| Anna        |  NULL |
+| Baker       | 55000 |
+| Brown       | 65000 |
+| Kevin       |   900 |
+| Lee         | 55000 |
+| Mark        |   500 |
+| Mary        |   750 |
+| Ray         | 90000 |
+| White       |  NULL |
+
+select FirstName as user_name, score as score_details from sales.Customers   -- here we have firstname and score columns
+union
+select LastName, Salary as emp_salaries from sales.Employees  -- here we mentioned the alias also for salary column
+
+-- o/p: 
+| user_name   | score_details |      -- here we see that the columns are using alias now, from first select query 
+| ------      | ----:         |      -- since we mentioned alias for salary but that alias is ignored 
+| NULL        | 75000         |      -- because sql takes only first select query columnname/alias 
+| Jossef      |   350         |      -- and remaining queries columnname/alias will be ignored
+| Anna        |  NULL         |
+| Baker       | 55000         |
+| Brown       | 65000         |
+| Kevin       |   900         |
+| Lee         | 55000         |
+| Mark        |   500         |
+| Mary        |   750         |
+| Ray         | 90000         |
+| White       |  NULL         |
+
+
+
+-- 6. we are responsible for proper mapping the columns so for example 
+-- we used two columns firstname, lastname from one table and same columns firstname, lastname from another column
+-- now we combine them using set operators 
+
+select firstname, lastname from sales.customers			-- here we followed all the rules but the mapping is wrong 
+union													-- we combined firstname of customers to lastname of employees so this is wrong mapping 
+select lastname, firstname from sales.employees			-- so we are responsible for proper mapping 
+
+-- o/p:
+| FirstName | LastName |
+| --------- | -------- |
+| NULL      | Mary     |
+| Jossef    | Goldberg |
+| Anna      | Adams    |
+| Baker     | Carol    |
+| Brown     | Kevin    |
+| Kevin     | Brown    |
+| Lee       | Frank    |
+| Mark      | Schwarz  |
+| Mary      | NULL     |
+| Ray       | Michael  |
+| White     | Kevin    |
+
+-- since we followed all the rules but we mapped them with wrong column so we need to make sure that we are mapping to correct column
+
+select firstname, lastname from sales.customers			-- here we followed all the rules
+union													-- we mapped the data correctly 
+select firstname, lastname from sales.employees			
+
+-- o/p:
+| FirstName | LastName |
+| --------- | -------- |
+| Jossef    | Goldberg |
+| Anna      | Adams    |
+| Carol     | Baker    |
+| Frank     | Lee      |
+| Kevin     | Brown    |
+| Kevin     | White    |
+| Mark      | Schwarz  |
+| Mary      | NULL     |
+| Michael   | Ray      |
+
+
+-- IMPORTANT POINT: if we mention the semicolon(;) at the end of first select query then it wont be able to use the union
+-- because sql treats semicolon means it is the end of the sql and when it goes to next then it sees union 
+-- so it throws the error because query cannot start with set operators 
+select FirstName, LastName from sales.Customers;        -- here we added semicolon
+union
+select FirstName, LastName from sales.Employees
+
+-- o/p:   Incorrect syntax near the keyword 'union'.
+
+-- so we don't add the semicolon in between set operators in queries 
+select FirstName, LastName from sales.Customers        -- here we removed semicolon and it works fine 
+union
+select FirstName, LastName from sales.Employees
+
+
+
+-- UNION
+-- it returns all the distinct/unique rows from the both queries
+-- it removes duplicates from the result 
+
+
+-- Q. combine all the data from employees and customers INTO ONE TABLE without duplicates
+-- so first we check the tables, so that we can understand that which columns we can combine 
+select * from sales.Customers  
+select * from sales.Employees
+-- here we have the common columns and data types we can combine them
+-- firstname, lastname from customers table
+-- firstname, lastname from employees table
+
+select FirstName, LastName from sales.Customers
+union
+select FirstName, LastName from sales.Employees
+
+
+-- so the in the table we also have the NULL values
+-- "IMPORTANT POINT":  NULL values while using the union it treats the null values as same to eliminate duplicates 
+-- the set operators combine the entire row so for union it compares the entire row if the entire has same then it treats it as the duplicate value and execute one row 
+-- if any of the column is different then it treats that row as unique 
+
+-- so lets add the different row firstname same and last name different in the employees
+select * from sales.employees
+insert into sales.employees(employeeid, firstname, lastname) values (6, 'Kevin', 'White')
+
+-- now the kevin and kevin have same firstnames but the lastname is different so it treated as unique 
+select firstname, lastname from sales.employees
+union
+select firstname, lastname from sales.customers
