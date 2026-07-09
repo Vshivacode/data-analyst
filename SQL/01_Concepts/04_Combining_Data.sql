@@ -522,20 +522,267 @@ select * from sales.Employees
 -- firstname, lastname from employees table
 
 select FirstName, LastName from sales.Customers
+| FirstName | LastName |
+| --------- | -------- |
+| Jossef    | Goldberg |
+| Kevin     | Brown    |
+| Mary      | NULL     |
+| Mark      | Schwarz  |
+| Anna      | Adams    |
+
+select FirstName, LastName from sales.Employees
+| FirstName | LastName |
+| --------- | -------- |
+| Frank     | Lee      |
+| Kevin     | Brown    |
+| Mary      | NULL     |
+| Michael   | Ray      |
+| Carol     | Baker    |
+| Kevin     | White    |
+
+
+-- IMPORTANT POINT:
+-- SPECIAL RULE FOR SET OPERATORS AND DISTINCT CLAUSE
+-- before doing union operation we have a special rule 
+-- for the set operations (UNION) and distinct when we have duplicates 
+-- so if we have the duplicates with NULL values like
+-- ex: 
+| FirstName | LastName |
+| --------- | -------- | 
+| Mary      | NULL     |
+-- since the NULL is unknown value, only when we are using comparison operators
+-- if we are using DISTINCT & SET OPERATORS(UNION), then NULL is treated as identical value 
+-- so if we have multiple NULLs also, with this special rule, they will be treated as one single NULL value
+-- so if we have 
+| FirstName | LastName |
+| --------- | -------- | 
+| Mary      | NULL     |
+| Mary      | NULL     |
+| Mary      | NULL     |
+| Frank     | Lee      |
+| Kevin     | Brown    |
+| Mary      | NULL     |
+
+-- then also it treats them as one identical match and shows single row 
+| FirstName | LastName |
+| --------- | -------- | 
+| Mary      | NULL     |
+| Frank     | Lee      |
+| Kevin     | Brown    |
+
+
+
+select ShipAddress from sales.Orders    -- here we have multiple null values inside the column
+-- so if we apply the distinct we will get only one NULL value inside the table instead of multiple null values
+select distinct ShipAddress from sales.Orders   -- we got only one null value
+
+
+-- if we use the set operators also it applies this special rule
+select FirstName, LastName from sales.Customers
 union
 select FirstName, LastName from sales.Employees
 
-
--- so the in the table we also have the NULL values
--- "IMPORTANT POINT":  NULL values while using the union it treats the null values as same to eliminate duplicates 
--- the set operators combine the entire row so for union it compares the entire row if the entire has same then it treats it as the duplicate value and execute one row 
--- if any of the column is different then it treats that row as unique 
 
 -- so lets add the different row firstname same and last name different in the employees
 select * from sales.employees
 insert into sales.employees(employeeid, firstname, lastname) values (6, 'Kevin', 'White')
 
+
 -- now the kevin and kevin have same firstnames but the lastname is different so it treated as unique 
 select firstname, lastname from sales.employees
 union
 select firstname, lastname from sales.customers
+
+
+
+
+
+-- UNION ALL
+-- it returns all the data including the duplicates from both tables
+-- UNION ALL gives the better performance while compared to UNION because it does not perform additional step like removing the duplicates
+-- we use UNION ALL when we have no duplicates there in the table to increase the performance 
+
+-- Q. combine all the data from employees and customers INTO ONE TABLE including the duplicates
+select firstname, lastname from sales.employees
+union all
+select firstname, lastname from sales.customers
+
+-- so now here we got the duplicate values also like
+| FirstName | LastName |
+| --------- | -------- |
+| Frank     | Lee      |
+| Kevin     | Brown    |
+| Mary      | NULL     |        -- duplicate
+| Michael   | Ray      |
+| Carol     | Baker    |
+| Kevin     | White    |
+| Jossef    | Goldberg |
+| Kevin     | Brown    |
+| Mary      | NULL     |        -- duplicate
+| Mark      | Schwarz  |
+| Anna      | Adams    |
+
+
+
+
+
+-- EXCEPT 
+-- it returns all the unique rows from the first select query that are not present in the second query  
+-- so it will give only values which are in the first query and dont want the common data from two queries
+-- and also excludes the common data from both the tables
+-- it only returns the data that are not present in the first query
+
+-- Q. find the employees who are not customers at the same time 
+select firstname, lastname from sales.employees
+except
+select firstname, lastname from sales.customers
+
+
+-- Q. find the customers who are not employees at the same time 
+select firstname, lastname from sales.customers
+except
+select firstname, lastname from sales.employees
+
+
+
+
+-- INTERSECT
+-- it is similar concept like inner join
+-- it returns the common rows from both the tables
+
+
+-- Q. find all the customers who are also employees
+-- what it mean we have to find all the common data from both the tables
+select firstname, lastname from sales.customers
+intersect 
+select firstname, lastname from sales.employees
+
+
+-- Q. find all the employees who are customers also 
+select firstname, lastname from sales.employees
+intersect 
+select firstname, lastname from sales.customers
+
+
+
+
+-- how we use set opeartors in real life use cases
+-- lets say we have multiple tables of same data 
+-- for example customers, employees, suppliers, students so these all are the persons data 
+-- so in this case we use the union operator to combine those tables to report analysis as we already did above 
+
+-- 2. for example we have multiple orders table divided them into year wise orders so we have the same data 
+-- so in that case if we want to some report we use the set operators 
+
+
+-- Q. orders data stored in the orders and ordersarchive tables 
+-- combine all the orders data into one report without duplicates 
+
+select * from sales.Orders
+union
+select * from sales.OrdersArchive
+-- here both the tables follow the rules of set operators so we used * but this is not a good way to write a query 
+
+-- why we need to mention the column names when we are using set operators ? 
+-- if we use * instead of columnnames, in future we may change the columns order in the schema or datatypes, etc 
+-- then in that case the result we get is different 
+-- so instead we mention all the column names
+
+-- TRICK: 
+-- so instead of writing all the column names manually in the query we can use the sql server
+-- so right click on the table you want the column names and click "select top 1000 rows" option then it will show a query with the result of top 1000 rows 
+-- so in the query it will return all the column names so from that we can copy the column names and use here 
+
+SELECT 
+       [OrderID]
+      ,[ProductID]
+      ,[CustomerID]
+      ,[SalesPersonID]
+      ,[OrderDate]
+      ,[ShipDate]
+      ,[OrderStatus]
+      ,[ShipAddress]
+      ,[BillAddress]
+      ,[Quantity]
+      ,[Sales]
+      ,[CreationTime]
+FROM Sales.Orders
+
+UNION
+
+SELECT 
+[OrderID]
+      ,[ProductID]
+      ,[CustomerID]
+      ,[SalesPersonID]
+      ,[OrderDate]
+      ,[ShipDate]
+      ,[OrderStatus]
+      ,[ShipAddress]
+      ,[BillAddress]
+      ,[Quantity]
+      ,[Sales]
+      ,[CreationTime]
+  FROM Sales.OrdersArchive
+
+
+
+-- now we combined both the tables but in the table we cannot able to see like which row is from which table
+-- so we can use a static value to treat that table data is from that particular table
+
+SELECT 'Orders' as SourceTable,
+       [OrderID]
+      ,[ProductID]
+      ,[CustomerID]
+      ,[SalesPersonID]
+      ,[OrderDate]
+      ,[ShipDate]
+      ,[OrderStatus]
+      ,[ShipAddress]
+      ,[BillAddress]
+      ,[Quantity]
+      ,[Sales]
+      ,[CreationTime]
+FROM Sales.Orders
+
+UNION
+
+SELECT 'OrdersArchive', 
+[OrderID]
+      ,[ProductID]
+      ,[CustomerID]
+      ,[SalesPersonID]
+      ,[OrderDate]
+      ,[ShipDate]
+      ,[OrderStatus]
+      ,[ShipAddress]
+      ,[BillAddress]
+      ,[Quantity]
+      ,[Sales]
+      ,[CreationTime]
+  FROM Sales.OrdersArchive
+
+-- o/p:
+| SourceTable   | OrderID | ProductID | CustomerID | SalesPersonID | OrderDate  | ShipDate   | OrderStatus | ShipAddress        | BillAddress    | Quantity | Sales | CreationTime                |
+| ------------- | ------: | --------: | ---------: | ------------: | ---------- | ---------- | ----------- | ------------------ | -------------- | -------: | ----: | --------------------------- |
+| Orders        |       1 |       101 |          2 |             3 | 2025-01-01 | 2025-01-05 | Delivered   | 9833 Mt. Dias Blv. | 1226 Shoe St.  |        1 |    10 | 2025-01-01 12:34:56.0000000 |
+| Orders        |       2 |       102 |          3 |             3 | 2025-01-05 | 2025-01-10 | Shipped     | 250 Race Court     | NULL           |        1 |    15 | 2025-01-05 23:22:04.0000000 |
+| Orders        |       3 |       101 |          1 |             5 | 2025-01-10 | 2025-01-25 | Delivered   | 8157 W. Book       | 8157 W. Book   |        2 |    20 | 2025-01-10 18:24:08.0000000 |
+| Orders        |       4 |       105 |          1 |             3 | 2025-01-20 | 2025-01-25 | Shipped     | 5724 Victory Lane  | *(empty)*      |        2 |    60 | 2025-01-20 05:50:33.0000000 |
+| Orders        |       5 |       104 |          2 |             5 | 2025-02-01 | 2025-02-05 | Delivered   | NULL               | NULL           |        1 |    25 | 2025-02-01 14:02:41.0000000 |
+| Orders        |       6 |       104 |          3 |             5 | 2025-02-05 | 2025-02-10 | Delivered   | 1792 Belmont Rd.   | NULL           |        2 |    50 | 2025-02-06 15:34:57.0000000 |
+| Orders        |       7 |       102 |          1 |             1 | 2025-02-15 | 2025-02-27 | Delivered   | 136 Balboa Court   | *(empty)*      |        2 |    30 | 2025-02-16 06:22:01.0000000 |
+| Orders        |       8 |       101 |          4 |             3 | 2025-02-18 | 2025-02-27 | Shipped     | 2947 Vine Lane     | 4311 Clay Rd   |        3 |    90 | 2025-02-18 10:45:22.0000000 |
+| Orders        |       9 |       101 |          2 |             3 | 2025-03-10 | 2025-03-15 | Shipped     | 3768 Door Way      | *(empty)*      |        2 |    20 | 2025-03-10 12:59:04.0000000 |
+| Orders        |      10 |       102 |          3 |             5 | 2025-03-15 | 2025-03-20 | Shipped     | NULL               | hyd            |        0 |    60 | 2025-03-16 23:25:15.0000000 |
+| OrdersArchive |       1 |       101 |          2 |             3 | 2024-04-01 | 2024-04-05 | Shipped     | 123 Main St        | 456 Billing St |        1 |    10 | 2024-04-01 12:34:56.0000000 |
+| OrdersArchive |       2 |       102 |          3 |             3 | 2024-04-05 | 2024-04-10 | Shipped     | 456 Elm St         | 789 Billing St |        1 |    15 | 2024-04-05 23:22:04.0000000 |
+| OrdersArchive |       3 |       101 |          1 |             4 | 2024-04-10 | 2024-04-25 | Shipped     | 789 Maple St       | 789 Maple St   |        2 |    20 | 2024-04-10 18:24:08.0000000 |
+| OrdersArchive |       4 |       105 |          1 |             3 | 2024-04-20 | 2024-04-25 | Delivered   | 987 Victory Lane   | *(empty)*      |        2 |    60 | 2024-04-20 14:50:33.0000000 |
+| OrdersArchive |       4 |       105 |          1 |             3 | 2024-04-20 | 2024-04-25 | Shipped     | 987 Victory Lane   | *(empty)*      |        2 |    60 | 2024-04-20 05:50:33.0000000 |
+| OrdersArchive |       5 |       104 |          2 |             5 | 2024-05-01 | 2024-05-05 | Shipped     | 345 Oak St         | 678 Pine St    |        1 |    25 | 2024-05-01 14:02:41.0000000 |
+| OrdersArchive |       6 |       101 |          3 |             5 | 2024-05-05 | 2024-05-10 | Delivered   | 543 Belmont Rd.    | 3768 Door Way  |        2 |    50 | 2024-05-12 20:36:55.0000000 |
+| OrdersArchive |       6 |       104 |          3 |             5 | 2024-05-05 | 2024-05-10 | Delivered   | 543 Belmont Rd.    | NULL           |        2 |    50 | 2024-05-06 15:34:57.0000000 |
+| OrdersArchive |       6 |       104 |          3 |             5 | 2024-05-05 | 2024-05-10 | Delivered   | 543 Belmont Rd.    | 3768 Door Way  |        2 |    50 | 2024-05-07 13:22:05.0000000 |
+| OrdersArchive |       7 |       102 |          3 |             5 | 2024-06-15 | 2024-06-20 | Shipped     | 111 Main St        | 222 Billing St |        0 |    60 | 2024-06-16 23:25:15.0000000 |
+
