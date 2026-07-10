@@ -786,3 +786,15 @@ SELECT 'OrdersArchive',
 | OrdersArchive |       6 |       104 |          3 |             5 | 2024-05-05 | 2024-05-10 | Delivered   | 543 Belmont Rd.    | 3768 Door Way  |        2 |    50 | 2024-05-07 13:22:05.0000000 |
 | OrdersArchive |       7 |       102 |          3 |             5 | 2024-06-15 | 2024-06-20 | Shipped     | 111 Main St        | 222 Billing St |        0 |    60 | 2024-06-16 23:25:15.0000000 |
 
+
+
+-- EXCEPT use cases
+-- 1. we can use this operator like when we moved some data to a another table from first table to second table
+-- but the first table is getting new data everytime so and that data to be added to second table
+-- in that case we use the EXCEPT because it validates the data which is present in the first table only 
+-- so we can add that data to the second table
+
+
+-- 2. data complteness 
+-- so when we are migrating the data from one database to another database EXCEPT help in identifying
+-- the data like both tables have the empty data in result which means the data is migrated completely without missing any values
