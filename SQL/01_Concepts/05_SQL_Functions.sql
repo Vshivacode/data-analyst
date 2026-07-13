@@ -289,42 +289,114 @@ select customerid, orderid, productid, creationtime from sales.orders where not 
 
 -- datename(part, date)
 -- it returns the name of the date means the dayname, monthname and result will be in string format 
-select datename(month, getdate()) -- returns the month name
+-- it is used for showing the data in the names instead of numbers and it can be useful when we are working with the visualisation
+
+select datename(month, getdate()) -- returns the month name january, february, march etc
+
+select datename(weekday, getdate())  -- returns the day name like monday, tuesday, etc
 
 select sql_variant_property(datename(week, getdate()), 'basetype') -- we can check the datatype with this
+
+select creationtime, datename(weekday, creationtime) as day_name, datename(month, creationtime) as month_name from sales.orders
+
+
+-- IMPORTANT POINT: 
+-- datename(): stores the data in string format 
+-- datepart(): stores the data in int format 
+-- so datepart(day, getdate()) and datename(day, getdate()) returns the same result but their datatype is different 
+
+select datepart(day, getdate())         -- this will give the result in integer type
+-- o/p: int type
+
+select datename(day, getdate())         -- this will give the result in string type 
+-- o/p: varchar type 
+
+-- so to find the data type of it we use 
+select sql_variant_property(datename(day, getdate()), 'basetype')       -- it will show the type of it 
 
 
 
 datetrunc(part, value)
+-- its datatype is datetime, so the columns which have date and time we use and
+-- we cannot be used for date column seperately or time column instead we want both date and time in single column
 -- it truncates specific part of the date or time so it means we show only that part which are needed accordingly 
 -- for time if we truncate then the truncated time will be reset to '00'
 -- for date if we truncate then the truncated date will be reset to '01'  because we dont have a day or something start with 00 
 -- ex: datetrunc(month, getdate())     o/p:  2025-11-01 00:00:00.000   after month the day is changed to 01 and time also changed to 00 
 select datetrunc(month, getdate())
 
+select creationtime, datetrunc(minute, creationtime) as truncated_creationtime from sales.orders    -- the seconds will be reset to 00
+-- o/p: 
+| creationtime                | truncated_creationtime      |
+| --------------------------- | --------------------------- |
+| 2025-01-01 12:34:56.0000000 | 2025-01-01 12:34:00.0000000 |
+| 2025-01-05 23:22:04.0000000 | 2025-01-05 23:22:00.0000000 |
+| 2025-01-10 18:24:08.0000000 | 2025-01-10 18:24:00.0000000 |
+| 2025-01-20 05:50:33.0000000 | 2025-01-20 05:50:00.0000000 |
+| 2025-02-01 14:02:41.0000000 | 2025-02-01 14:02:00.0000000 |
+| 2025-02-06 15:34:57.0000000 | 2025-02-06 15:34:00.0000000 |
+| 2025-02-16 06:22:01.0000000 | 2025-02-16 06:22:00.0000000 |
+| 2025-02-18 10:45:22.0000000 | 2025-02-18 10:45:00.0000000 |
+| 2025-03-10 12:59:04.0000000 | 2025-03-10 12:59:00.0000000 |
+| 2025-03-16 23:25:15.0000000 | 2025-03-16 23:25:00.0000000 |
 
-select datetrunc(year, creationtime) as year_trunc from sales.orders 
+
+select creationtime, datetrunc(hour, creationtime)  from sales.orders    -- the minutes and seconds will be reset to 00
+
+select creationtime, datetrunc(day, creationtime) from sales.orders    -- the hour, minutes and seconds will be reset to 00
+
+select creationtime, datetrunc(month, creationtime) from sales.orders    -- day will be reset to 01 and the hour, minutes and seconds will be reset to 00 
+
+select creationtime, datetrunc(year, creationtime) from sales.orders    -- day and month will be reset to 01 and the hour, minutes and seconds will be reset to 00
+
+
+-- WHY DATETRUNC() IS USED ? WHERE DO WE USE IT ?
+-- it is amazing feature for finding the specific part of the date time 
+-- lets say we want to find the number of orders made in the month or year or per day or per hour or per minute or per second then 
+-- in this case we can use the date trunc to find the results 
+
+-- so find the number of orders made in a month 
+select datetrunc(month, creationtime) as month_wise, count(*) as month_orders from sales.orders group by datetrunc(month, creationtime)
+-- o/p: 
+month_wise                    month_orders
+2025-01-01 00:00:00.0000000	    4
+2025-02-01 00:00:00.0000000	    4
+2025-03-01 00:00:00.0000000	    2
+
+-- find the no of orders per day 
+select datetrunc(day, creationtime) as day_wise, count(*) as per_day_orders from sales.orders group by datetrunc(day, creationtime)
+-- o/p: 
+day_wise                    per_day_orders
+2025-01-01 00:00:00.0000000	    1
+2025-01-05 00:00:00.0000000	    1
+2025-01-10 00:00:00.0000000	    1
+2025-01-20 00:00:00.0000000	    1
+2025-02-01 00:00:00.0000000	    1
+2025-02-06 00:00:00.0000000	    1
+2025-02-16 00:00:00.0000000	    1
+2025-02-18 00:00:00.0000000	    1
+2025-03-10 00:00:00.0000000	    1
+2025-03-16 00:00:00.0000000	    1
 
 
 
 -- EOMONTH(date)
 -- it returns the end of the month means if the date have month march then it changes the day to the 31 because march month contains the last day 31
-
+-- and its datatype is date
 
 select eomonth(getdate())
 
 select eomonth(creationtime) from sales.orders
 
 
+-- WE CAN GET START OF THE MONTH using the datetrunc
 -- To get the start day of month we combine it with the datetrunc to show the start day of month
+-- which means we have to change the starting of the days to 01 
 select datetrunc(month,creationtime) from sales.orders
 
 
-
-
 -- Q. How many orders placed each year
-select year(orderdate) as year, count(*) as no_of_orders from sales.orders group by datepart(year, orderdate)
-
+select datepart(year, orderdate), count(*) as no_of_orders from sales.orders group by datepart(year, orderdate)
 
 -- Q. how many orders placed each month
 select datename(month, orderdate) as month, count(*) as no_of_orders from sales.orders group by datename(month, orderdate)
@@ -332,8 +404,7 @@ select datename(month, orderdate) as month, count(*) as no_of_orders from sales.
 
 
 -- Q. show all the orders that were placed in the month of february 
-select * from sales.orders where month(orderdate) = 2
-
+select * from sales.orders where datepart(month, orderdate) = 2
 
 
 
@@ -368,168 +439,14 @@ select
 
 from sales.orders
 
-
--- Q. show creation time using this format " day wed jan Q1 2025 12:34:56 pm "
-
-select 
-    creationtime, 
-    concat_ws(
-    ' ',
-    format(creationtime, 'dd ddd MMM'),
-    concat('Q', datepart(quarter, creationtime)),
-    format(creationtime, 'yyyy HH:mm:ss tt')
-    ) 
-from sales.orders 
-
--- or we can simply do this 
-select 
-    creationtime, 
-    format(creationtime, 'dd ddd MMM') + ' ' +
-    'Q' + datename(quarter, creationtime) + ' ' +
-    format(creationtime, 'yyyy HH:mm:ss tt') 
+select creationtime, 
+format(creationtime, 'dd') as daynumber,
+format(creationtime, 'ddd') as dayname_short,
+format(creationtime, 'dddd') as dayname_full,
+format(creationtime, 'mm') as monthnumber, 
+format(creationtime, 'mmm') as monthname_short,
+format(creationtime, 'mmmm') as month_name_full,
+format(creationtime, 'yyyy') as yearnumber,
+format(creationtime, 'dd/mm/yyyy') format_date
 from sales.orders
-
-
-
-
--- find sales by month
-select format(orderdate, 'MMM yyyy'), count(*) from sales.orders group by format(orderdate, 'MMM yyyy')
-
-
-
--- so using the numbers with format()
--- number default value
-select format(sales, 'N') from sales.orders      -- 'N' is used to format it to number default
-
--- percentage
-select format(sales, 'p') from sales.orders      -- 'p' is used to format it to percentage
-
--- CURRENCY
-select format(sales, 'c') from sales.orders      -- 'c' is used to format it to currency in dollars by default
-
--- if we want in indian rupees then we need to use the culture codes 
--- so for indian rupees we use 'hi-in' so it is like the national language spoken and the india country in two letters
-
-select format(sales, 'c', 'hi-in') from sales.orders      -- 'c' is used to format it to currency and  'hi-in' is used for indian rupees
-
-select format(sales, 'c', 'zh-cn') from sales.orders      -- 'c' is used to format it to currency and  'zh-cn' is used for china 
-
--- DECIMALS 
-select format(sales, 'N1') from sales.orders      -- 'N1' is used to format it to one decimal
-
-select format(sales, 'N2') from sales.orders      -- 'N2' is used to format it to two decimals
-
-select format(sales, 'N99') from sales.orders      -- 'N2' is used to format it to two decimals
-
--- upto 99 we can use any number of decimals we want because after that if we do N100 then it wont work
-
-
-
-
--- CONVERT(data_type, value,)
--- it is used to convert the date and time value to a different data type and also formats the value
--- so converting the int value to varchar or vice versa or any other 
-select convert(int, '123') as varchar_to_int   -- converting the varchar to int value
-
-
-select convert(varchar, 123) as int_to_varchar   -- converting the int to varchar value
--- lets check datatype
-select sql_variant_property(convert(varchar, 123), 'basetype') as int_to_varchar 
-
-
-select convert(date, '2025-01-23') as varchar_to_date    
-
--- lets convert the creationtime to date 
-select convert(date, creationtime) from sales.orders    
--- lets check the datatype of the value
-select convert(date, creationtime), sql_variant_property(convert(date, creationtime), 'basetype') as datatype from sales.orders    
-
-
-
--- CAST(value as datatype)
--- converts a value to a specific data type and we use this only for changing the datatype
--- we give the value and we tell the datatype we want to convert it
-select cast(234 as varchar), SQL_VARIANT_PROPERTY(cast(234 as varchar), 'basetype')    -- converting it to varchar
-
-
-
-
-
---  difference between FORMAT() VS CONVERT() VS CAST()
--- FORMAT()
--- it is used to convert any type to string and can format the datetime and numbers also
-
-
--- CONVERT()
--- it is used to convert the data types and only formats the datetime
-
-
--- CAST()
--- it is used to convert only the datatypes NO Formating 
-
-
-
--- DATE CALCULATIONS
--- types of date calcualtions
--- 1. DATEADD()      2. DATEDIFF()
-
--- DATEADD(part, interval, date)
--- these are used to add or subtract the date or time interval like adding the years to the date or subtract to the months or adding some hours minutes seconds of time
--- ex: adding 5 years to the year,     subtract 3 months from month,       add 30 minutes to minutes for time
-
-select creationtime, dateadd(hour, 2, creationtime) from sales.orders    -- we added 2 hours to the creationtime
-select creationtime, dateadd(minute, 40, creationtime) from sales.orders    -- we added 40 minutes to the creationtime
-select creationtime, dateadd(second, 19, creationtime) from sales.orders    -- we added 19 seconds to the creationtime
-
-select orderdate, dateadd(year, -5, orderdate) from sales.orders       -- we subtracted 5 years from year
-select orderdate, dateadd(month, 10, orderdate) from sales.orders       -- we added 10 months from months
-select orderdate, dateadd(day, 23, orderdate) from sales.orders       -- we added 23 days from days
-
-
-
--- DATEDIFF(part, start_date, end_date)
--- it is used to calculate the difference between two dates
-
-select orderdate, creationtime, datediff(month, orderdate, getdate()) as month_diff from sales.orders
-
-select orderdate, creationtime, datediff(minute, orderdate, getdate()) as month_diff from sales.orders
-
-
-
--- calcualte the age of the employees
-select *, datediff(year, birthdate, getdate()) as age from sales.employees
-
-
--- find the average shipping duration in days for each month
-select * from sales.orders
-
-select month(orderdate) as orderdate, avg(datediff(day, orderdate, shipdate)) as avgship from sales.orders group by month(orderdate) 
-
-
-
--- find the number of days between each order and the previous order
-select * from sales.orders
-
-select orderid, orderdate as current_order_date,
-lag(orderdate) over (order by orderdate) as previous_order_date,
-datediff(day, lag(orderdate) over (order by orderdate), orderdate)
-from sales.orders order by orderdate asc
-
-
-
-
--- ISDATE(value)
--- it is used to check the value is a valid date or not
--- if it is valid date it returns 1 
--- if date is invalid then it returns 0
-select isdate('2025-10-100')    -- returns 0 because it is invalid
-
-select isdate('2025-10-10')     -- returns 1 date is valid
-
-
-select isdate('123')
-
-select isdate('1800')       -- returns 1 because it treats as a year
-
-select isdate('20')         -- it returns 0 not a month or day or year 
 
