@@ -435,9 +435,10 @@ select
     format(creationtime, 'HH') as '24hour',          -- 24 hours
     format(creationtime, 'hh') as '12hour',          -- 12 hours
     format(creationtime, 'mm') as minute,          
-    format(creationtime, 'ss') as second          
-
+    format(creationtime, 'ss') as second,
+    format(creationtime, 'tt') as 'AM/PM'
 from sales.orders
+
 
 select creationtime, 
 format(creationtime, 'dd') as daynumber,
@@ -449,4 +450,233 @@ format(creationtime, 'mmmm') as month_name_full,
 format(creationtime, 'yyyy') as yearnumber,
 format(creationtime, 'dd/mm/yyyy') format_date
 from sales.orders
+
+
+-- Q. show creation time using this format " day wed jan Q1 2025 12:34:56 pm "
+
+select concat(format(creationtime, 'dd ddd MMM'), ' ', 'Q', datename(quarter, creationtime), ' ',format(creationtime, 'yyyy hh:mm:ss tt')) from sales.orders
+
+
+
+
+select 
+    creationtime, 
+    concat_ws(
+    ' ',
+    format(creationtime, 'dd ddd MMM'),
+    concat('Q', datepart(quarter, creationtime)),
+    format(creationtime, 'yyyy HH:mm:ss tt')
+    ) 
+from sales.orders 
+
+-- or we can simply do this 
+select 
+    creationtime, 
+    format(creationtime, 'dd ddd MMM') + ' ' +
+    'Q' + datename(quarter, creationtime) + ' ' +
+    format(creationtime, 'yyyy HH:mm:ss tt') 
+from sales.orders
+
+
+
+
+-- find sales by month
+select format(orderdate, 'MMM yyyy'), count(*) from sales.orders group by format(orderdate, 'MMM yyyy')
+-- o/p:
+Feb 2025	4
+Jan 2025	4
+Mar 2025	2
+
+
+-- so using the numbers with format()
+-- number default value
+select format(sales, 'N') from sales.orders      -- 'N' is used to format it to number default
+10.00
+15.00
+20.00
+60.00
+25.00
+50.00
+30.00
+90.00
+20.00
+60.00
+
+-- percentage
+select format(sales, 'p') from sales.orders      -- 'p' is used to format it to percentage
+1,000.00%
+1,500.00%
+2,000.00%
+6,000.00%
+2,500.00%
+5,000.00%
+3,000.00%
+9,000.00%
+2,000.00%
+6,000.00%
+
+-- CURRENCY
+select format(sales, 'c') from sales.orders      -- 'c' is used to format it to currency in dollars by default
+$10.00
+$15.00
+$20.00
+$60.00
+$25.00
+$50.00
+$30.00
+$90.00
+$20.00
+$60.00
+
+-- if we want in indian rupees then we need to use the culture codes 
+-- so for indian rupees we use 'hi-in' so it is like the national language spoken and the india country in two letters
+
+select format(sales, 'c', 'hi-in') from sales.orders      -- 'c' is used to format it to currency and  'hi-in' is used for indian rupees
+₹10.00
+₹15.00
+₹20.00
+₹60.00
+₹25.00
+₹50.00
+₹30.00
+₹90.00
+₹20.00
+₹60.00
+
+select format(sales, 'c', 'zh-cn') from sales.orders      -- 'c' is used to format it to currency and  'zh-cn' is used for china 
+¥10.00
+¥15.00
+¥20.00
+¥60.00
+
+
+-- DECIMALS 
+select format(sales, 'N1') from sales.orders      -- 'N1' is used to format it to one decimal
+10.0
+15.0
+20.0
+60.0
+
+
+select format(sales, 'N2') from sales.orders      -- 'N2' is used to format it to two decimals
+10.00
+15.00
+20.00
+60.00
+
+
+select format(sales, 'N99') from sales.orders      -- 'N2' is used to format it to two decimals
+
+-- upto 99 we can use any number of decimals we want because after that if we do N100 then it wont work
+
+
+
+
+-- CONVERT(data_type, value,)
+-- it is used to convert the date and time value to a different data type and also formats the value
+-- so converting the int value to varchar or vice versa or any other 
+select convert(int, '123') as varchar_to_int   -- converting the varchar to int value
+
+
+select convert(varchar, 123) as int_to_varchar   -- converting the int to varchar value
+-- lets check datatype
+select sql_variant_property(convert(varchar, 123), 'basetype') as int_to_varchar 
+
+
+select convert(date, '2025-01-23') as varchar_to_date    
+
+-- lets convert the creationtime to date 
+select convert(date, creationtime) from sales.orders    
+-- lets check the datatype of the value
+select convert(date, creationtime), sql_variant_property(convert(date, creationtime), 'basetype') as datatype from sales.orders    
+
+
+
+-- CAST(value as datatype)
+-- converts a value to a specific data type and we use this only for changing the datatype
+-- we give the value and we tell the datatype we want to convert it
+select cast(234 as varchar), SQL_VARIANT_PROPERTY(cast(234 as varchar), 'basetype')    -- converting it to varchar
+
+
+
+
+
+--  difference between FORMAT() VS CONVERT() VS CAST()
+-- FORMAT()
+-- it is used to convert any type to string and can format the datetime and numbers also
+
+
+-- CONVERT()
+-- it is used to convert the data types and only formats the datetime
+
+
+-- CAST()
+-- it is used to convert only the datatypes NO Formating 
+
+
+
+-- DATE CALCULATIONS
+-- types of date calcualtions
+-- 1. DATEADD()      2. DATEDIFF()
+
+-- DATEADD(part, interval, date)
+-- these are used to add or subtract the date or time interval like adding the years to the date or subtract to the months or adding some hours minutes seconds of time
+-- ex: adding 5 years to the year,     subtract 3 months from month,       add 30 minutes to minutes for time
+
+select creationtime, dateadd(hour, 2, creationtime) from sales.orders    -- we added 2 hours to the creationtime
+select creationtime, dateadd(minute, 40, creationtime) from sales.orders    -- we added 40 minutes to the creationtime
+select creationtime, dateadd(second, 19, creationtime) from sales.orders    -- we added 19 seconds to the creationtime
+
+select orderdate, dateadd(year, -5, orderdate) from sales.orders       -- we subtracted 5 years from year
+select orderdate, dateadd(month, 10, orderdate) from sales.orders       -- we added 10 months from months
+select orderdate, dateadd(day, 23, orderdate) from sales.orders       -- we added 23 days from days
+
+
+
+
+-- DATEDIFF(part, start_date, end_date)
+-- it is used to calculate the difference between two dates
+
+select orderdate, creationtime, datediff(month, orderdate, getdate()) as month_diff from sales.orders
+
+select orderdate, creationtime, datediff(minute, orderdate, getdate()) as month_diff from sales.orders
+
+select * from sales.orders
+
+-- calcualte the age of the employees
+select *, datediff(year, birthdate, getdate()) as emp_age from sales.employees
+
+-- find the average shipping duration in days for each month
+select * from sales.orders
+
+select month(orderdate) as orderdate, avg(datediff(day, orderdate, shipdate)) as avgship from sales.orders group by month(orderdate) 
+
+
+
+-- find the number of days between each order and the previous order
+select * from sales.orders
+
+select orderid, orderdate as current_order_date,
+lag(orderdate) over (order by orderdate) as previous_order_date,
+datediff(day, lag(orderdate) over (order by orderdate), orderdate)
+from sales.orders order by orderdate asc
+
+
+
+
+-- ISDATE(value)
+-- it is used to check the value is a valid date or not
+-- if it is valid date it returns 1 
+-- if date is invalid then it returns 0
+select isdate('2025-10-100')    -- returns 0 because it is invalid because we dont have day 100
+
+select isdate('2025-10-10')     -- returns 1 date is valid
+
+select isdate('22-10-2026')     -- returns 0 date is invalid, because sql by default takes this format 'yyyy-mm-dd' so here the format is different it treats as wrong format
+
+select isdate('123')
+
+select isdate('1800')       -- returns 1 because it treats as a year
+
+select isdate('20')         -- it returns 0 not a month or day or year 
 
