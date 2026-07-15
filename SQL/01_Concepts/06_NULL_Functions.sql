@@ -8,6 +8,14 @@
 -- it is used to replace the null values with the specific values
 -- ex:  isnull(shipping_address, 'unknown')     -- here we are replacing the shipping address null values to unknown value
 
+select isnull(billaddress, 'unknown') from sales.orders
+
+-- we can also replace the values with another column values also 
+select isnull(shipaddress, billaddress) from sales.orders    -- it will replace the null with the billaddress values of that row 
+
+-- so isnull() accepts only two arguments one is value and other is replacement_value 
+-- so if both the value and replacement_value is null then in the result we get the null
+-- so if we dont want to show the null then in that case we need to another function called coalesce()
 
 
 -- COALESCE()
@@ -17,11 +25,10 @@
 -- we can specify as many we want it will check all the values and if all the values have the null values
 -- we can give the custom value to replace the null
 
--- Q. replace the null values of shipaddress with the billingaddress and if the billingaddress have null values replace it wiht custom value
+-- Q. replace the null values of shipaddress with the billingaddress and if the billingaddress have null values replace it with custom value
 -- ex:   isnull(shipaddress, billingaddress)       -- here we have a problem so if both values have the null value then we dont have another arguments to put using isnull()
 
--- so here we  use the coalesce()
-
+-- so here we use the coalesce()
 select shipaddress, billaddress, coalesce(shipaddress, billaddress, 'unknown') as replaced_values from sales.orders
 
 -- we cannot do like this with isnull() because it only accepts 2 arguments 
@@ -42,7 +49,7 @@ select shipaddress, billaddress, coalesce(shipaddress, billaddress, 'unknown') a
 
 
 
-
+-- DATA AGGREGATION 
 -- IMPORTANT:   HANDLING NULL VALUES WHILE PERFORMING DATA AGGREGATIONS
 -- so when are performing some calculations with the aggregate functions like sum(), avg(), min(), max(), count()
 -- the NULL values are ignored by sql but when it comes to COUNT(*) 
@@ -56,11 +63,24 @@ select shipaddress, billaddress, coalesce(shipaddress, billaddress, 'unknown') a
 -- Q.  Find the avg scores of the customers 
 -- we can directly do this 
 select avg(score) from sales.customers      -- but this is wrong because we may have some null values in this 
+-- o/p: 625
 
--- so before doing the aggregations we handle null values by using the coalesce()
-select score, coalesce(score, 0) as null_to_0 from sales.customers
+-- so before doing the aggregations we handle null values
+-- since it is a two arguments only so we can use the isnull(), if we want more arguments then we can use coalesce()
+select score, isnull(score, 0) as null_to_0 from sales.customers 
+-- o/p:
+score   null_to_0
+350	        350
+900	        900
+750	        750
+500	        500
+NULL	     0          -- changed null to 0
 
+-- now lets find the avg of scores
+select avg(isnull(score, 0)) from sales.customers
+-- or 
 select avg(coalesce(score, 0)) as null_to_0 from sales.customers
+-- o/p: 500
 
 
 
@@ -78,63 +98,3 @@ select avg(coalesce(score, 0)) as null_to_0 from sales.customers
 
 -- before doing any operations we handle null values
 select coalesce(firstname + ' '+ lastname, firstname, lastname, 'unknown'),score, coalesce(score + 10, 10) from sales.customers 
-
-
-
-
--- HANDLING NULL VALUES IN JOINS
--- so we have to handle the null values while doing the joins also 
--- because the sql will skip that row if we have the null values so to handle null values 
-
-Table1
-Year	Type	Orders
-2024	NULL	30
-2024	b	40
-2025	NULL	50
-2025	b	60
-
-Table2
-Year	Type	Sales
-2024	a	100
-2024	NULL	200
-2025	b	300
-2025	NULL	200
-
--- here we can see that the 2024 have the null values so the sql ignore that row so we need to handle that
-select table1.year, table1.type, table1.orders, table1.sales
-from table1 
-inner join table2 on table1.year = table2.year and table1.type = table2.type
-
-
--- so now we handle the null values
-select table1.year, table1.type, table1.orders, table1.sales
-from table1 
-inner join table2 on table1.year = table2.year and isnull(table1.type, '') = isnull(table2.type, '')
-
--- IMP POINT: here we need to keep in mind that the output table will show the null values in the table 
--- because we handle the null values in the join not on the output table 
-
-
-
-
--- SORTING DATA
--- we need to handle the null values before sorting the data
--- ex: table have 3 values 
--- 25
--- NULL
--- 10
-
--- so if we sort the data then the NULL will appear at the starting it doesnt mean NULL value is lowest but sql show at starting
-select score from sales.customers order by score            --  NULL shown at first
-
-select score from sales.orders order by score desc          -- NULL shown at last 
-
-
--- Q. sort the customers from lowest to highest scores with NULL values shown at last 
-select *, coalesce(score, 99999999) as score_null_to_0 from sales.customers order by coalesce(score, 99999999) 
--- but this is not a good approach because we are mentioning static value 9999999 but infuture we may get the value more than this 
-
--- so we use another method using case when 
-select *, case when score is null then 1 else 0 end flag 
-from sales.customers 
-order by case when score is null then 1 else 0 end, score     -- here we are sorting via flag column and score to get the null values at last 
