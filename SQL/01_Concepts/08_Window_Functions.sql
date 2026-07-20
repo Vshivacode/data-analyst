@@ -162,3 +162,85 @@ select sales, productid, orderstatus, sum(sales) over (partition by productid, o
 -- select orderid, orderdate,sales, rank() over(order by sales desc) from sales.orders
 
 select orderid, orderdate,sales, rank() over (order by sales desc) from sales.orders
+
+
+-- WINDOW FRAME CLAUSE
+-- the partition by creates windows according to the aggregations so in the same way the frame clause will create another window inside a window like nested if we are using the partition by only 
+-- if we are not using partition by it will do the aggregations for the entire column so it will assume as one window
+-- the frame clause window is based on the conditions like from which row to take or do the calculations of a window
+-- it will do the aggregations based on the conditions 
+-- it is not used while we are working with the rank functions 
+-- we can use it with the aggregate and value functions only 
+
+-- frame clause syntax -  frame type lower value and higher value 
+-- frame type = ROWS  and  RANGE 
+-- lower value  =  UNBOUNDED PRECEDING, N PRECEDING, CURRENT ROW
+-- higer value = CURRENT ROW, N FOLLOWING , UNBOUNDED FOLLOWING
+
+-- UNBOUNDED PRECEDING =  it means start from the first row of the column
+-- N PRECEDING  =   N means any number to start from  like   3 preceding means take 3 rows 
+-- CURRENT ROW = the current row we are in the calculations we are performing 
+
+-- UNBOUNDED FOLLOWING =  it means goto the last row of the column 
+-- N FOLLOWING =  N means any number of rows to take like for 3 following means take 3 rows 
+-- CURRENT ROW  =  the current row we are in calculation 
+
+-- COMBINATIONS  WE GET (always we use lower value at the left side and right will be the higher value)
+
+-- ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW 
+-- means start from the first row and go till the end of the column calculating the each rows
+-- so lets say we start from the first row and initially we are in the first row so the first row and the current row will be same so the value will be same 
+-- for next row it will take the first row and now the current row will be the second row so it will do first row + second row = the current row value if we are doing the sum(columnname) 
+-- if we are doing min(columnname) then it will compare the both values and return that value to the current row 
+
+create table sales.monthly_sales(id int primary key, month varchar(20), sales int)
+
+INSERT INTO sales.monthly_sales (id, month, sales) VALUES
+(1,  'January',   12),
+(2,  'February',  24),
+(3,  'March',     18),
+(4,  'April',     32),
+(5,  'May',       44),
+(6,  'June',      26),
+(7,  'July',      38),
+(8,  'August',    40),
+(9,  'September', 22),
+(10, 'October',   48),
+(11, 'November',  36),
+(12, 'December',  28);
+
+INSERT INTO sales.monthly_sales (id, month, sales) VALUES
+-- January duplicated 3 times
+(13, 'January', 18),
+(14, 'January', 24),
+(15, 'January', 32),
+
+-- March duplicated once
+(16, 'March', 20),
+
+-- May duplicated twice
+(17, 'May', 28),
+(18, 'May', 42),
+
+-- August duplicated 3 times
+(19, 'August', 16),
+(20, 'August', 22),
+(21, 'August', 48),
+
+-- November duplicated once
+(22, 'November', 14),
+
+-- December duplicated twice
+(23, 'December', 26),
+(24, 'December', 38);
+
+
+select * from sales.monthly_sales
+
+-- since we are not using partition by it will take the entire column as one window and it will do the aggregations
+select month, sales, sum(sales) over (order by sales rows between unbounded preceding and current row) from sales.monthly_sales
+
+
+-- if we use the partition by month then it will create the windows and if we use the frame clause then it will take rows within that window 
+select month, sales, sum(sales) over (partition by month order by sales rows between unbounded preceding and current row) from sales.monthly_sales
+
