@@ -244,3 +244,85 @@ select month, sales, sum(sales) over (order by sales rows between unbounded prec
 -- if we use the partition by month then it will create the windows and if we use the frame clause then it will take rows within that window 
 select month, sales, sum(sales) over (partition by month order by sales rows between unbounded preceding and current row) from sales.monthly_sales
 
+
+
+-- ROWS BETWEEN UNBOUNDED PRECEDING AND 2 FOLLOWING
+-- it means from first row to the 2 following means the next two rows from the current row 
+-- which means if we are in the first row it will take first row + second row + third row 
+-- now we are in the second row so it will take the first row + second row (current row) + third row + fourth row
+-- now we are in third row so it will take first row + second row + third row(current row) + fourth row + fifth row
+select month, sales, sum(sales) over (order by sales rows between unbounded preceding and 2 FOLLOWING) from sales.monthly_sales
+
+
+-- ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+-- it means the it will take from the first row to  last row which means all the rows of that column same as doing the simply total sales 
+-- select sum(sales) from sales.monthly_sales
+
+select month, sales, sum(sales) over (order by sales rows between unbounded preceding and UNBOUNDED FOLLOWING) from sales.monthly_sales
+
+
+
+-- ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW 
+-- it means take the current row and take all the rows before the current row 
+select month, sales, sum(sales) over (order by sales rows between unbounded preceding and current row) from sales.monthly_sales
+
+
+-- ROWS BETWEEN 2 PRECEDING AND CURRENT ROW 
+-- means how many rows to take before the current row 
+-- so first row will be same first row + current row = first row value
+-- so now we are in second row so first row + second row (current row) 
+-- now we are in third row  so it will take first row + second row + third (current row)
+-- now we are in fourth row so it will take second row + third row + fourth row (current row)
+select month, sales, sum(sales) over (order by sales rows between 2 preceding and CURRENT ROW) from sales.monthly_sales
+
+
+-- ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING 
+-- it means take 2 rows before current row and take 2 rows after current row
+-- so now we are in first row so it will take first row(current row) + second row + third row  because before first row we dont have any rows so we do from current row which is first row
+-- now we are in second row so it will take first row + second row(current row) + third row + fourth row + fifth row
+-- now we are in the third row so it will take first + second + third(current) + fourth + fifth 
+select month, sales, sum(sales) over (order by sales rows between 2 preceding and 2 FOLLOWING) from sales.monthly_sales
+
+
+
+
+-- ROWS BETWEEN 2 PRECEDING AND UNBOUNDED FOLLOWING    (sql do reverse calculation)
+-- it means 2 rows before current row and goto all the rows to the end 
+select month, sales, sum(sales) over (order by sales rows between 2 preceding and UNBOUNDED FOLLOWING) from sales.monthly_sales
+-- so here the data we get will be in the reverse order like the sales will be arranged in the desc order 
+-- because sql takes the optimised calculations so by doing it from the bottom to first row it will be easier and fastest way to do the calculations 
+-- so thats why we get the data in the reverse calculation 
+-- so get in the proper order like we want the sales to be shown as lower to higher then we use order by sales asc at the end 
+-- we dont change inside the over() clause because it is used for the calculation purposes not for ordering the data 
+select month, sales, sum(sales) over (order by sales rows between 2 preceding and UNBOUNDED FOLLOWING) from sales.monthly_sales order by sales, month
+-- it will do like  last row(current row) + last second row + last third row + .......+ first row 
+-- now we are in last second row(current row) so it will do last row + last second row(current) + last third + last fourth + .........+ first row
+-- now we are in last third row(current row) so it will do last row + last second row + last third(current) + last fourth + .........+ first row
+-- now we are in last fourth row(current row) so it will do last second row + last third + last fourth(current) + .........+ first row
+-- now we are in the first row (current row ) so it will take the first row(current) + second row + third row 
+
+ 
+-- ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING    (sql do reverse calculation)
+-- it means current row goto all the rows  
+select month, sales, sum(sales) over (order by sales rows between current row and unbounded following) from sales.monthly_sales
+-- it do the calculation in reverse and display the data in reverse so to get it properly displayed we use order by at the end
+select month, sales, sum(sales) over (order by sales rows between current row and unbounded following) from sales.monthly_sales order by sales
+
+
+select * from sales.monthly_sales
+
+
+-- ROWS BETWEEN CURRENT ROW AND THE 2 FOLLOWING 
+-- it means take current row and take 2 rows after current row 
+select month,sales, sum(sales) over (order by sales rows between current row and 2 following) from sales.monthly_sales
+-- it calculates forward does not do the reverse calculation
+-- so now we are in first row (current row) + second row + third row
+-- now are in second row (current row) it will take second (current) + third + fourth 
+-- last row (current row) since we are in last row it does not have any further rows to calculate it show the same value 
+
+
+
+-- ROWS BETWEEN CURRENT ROW AND CURRENT ROW
+-- it is of no use because it will give the same values that sales have since we are doing the current row itself 
+-- so it did not change any value so no use of it
+select month,sales, sum(sales) over (order by sales rows between current row and current row) from sales.monthly_sales
