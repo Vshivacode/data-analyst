@@ -326,3 +326,86 @@ select month,sales, sum(sales) over (order by sales rows between current row and
 -- it is of no use because it will give the same values that sales have since we are doing the current row itself 
 -- so it did not change any value so no use of it
 select month,sales, sum(sales) over (order by sales rows between current row and current row) from sales.monthly_sales
+
+
+
+
+-- WINDOW FUNCTIONS 4 RULES 
+-- FIRST RULE:  window functions only used in the select and order by we cannot do with other clauses 
+-- select month,sales, sum(sales) over (partition by month) from sales.monthly_sales order by sum(sales) over (partition by month)
+-- we used window func in the order by clause
+-- we cannot do with other clauses like the where, group by, etc
+
+-- SECOND RULE:  nesting window functions is not allowed 
+-- we cannot add another window func in one window func 
+-- ex: select month,sales, sum(sum(sales) over (partition by month)) over (partition by month) from sales.monthly_sales
+
+-- THIRD RULE: sql window functions execute after where clause 
+
+-- Q. find the total sales for each orderstatus only for two products 101 and 102
+select * from sales.orders
+
+select orderid,productid, orderstatus, sum(sales) over(partition by orderstatus) from sales.orders where productid = 101 or productid = 102 
+
+
+-- FOURTH RULE: window functions can be used with the group by but only when we use the same column 
+-- so here we use the same column name inside the over clause also so which means sum(sales) we used for group by 
+-- same we use this inside the over() clause
+-- not only the sum(sales) column we can use the other columns also which we are using for the group by like customerid also can be used inside the over() clause
+-- Q. rank the customers based their total sales 
+select customerid, sum(sales) as total_sales, rank() over(order by sum(sales)) from sales.orders group by customerid
+
+
+
+
+
+-- WINDOW AGGREGATE FUNCTIONS
+-- they are sum(), count(), avg(), min(), max()
+-- so when we do use this functions it will give the result in one row 
+-- count() only accepts all the datatypes remaining accepts only numeric values
+-- so window definition over() can be have empty like the partition by, order by, frame clause can be optional for aggregate functions only
+
+-- COUNT()
+-- it returns the number of rows within a window like how many rows we have within the window even if we have duplicates also it will count as seperate  
+-- and it is mainly used for data quality check that means we can easily know whether the table contains any duplicate values or not 
+-- we can use the count() in two ways
+-- count(*)        
+-- so it will count all the rows including if any column have the null values also it will count that as one row because the other column have the values it just count how many rows are there 
+-- count(column)
+-- if we use the column then it ignores the null values and count the rows how many we have 
+-- 
+
+
+-- Q. find the total number of orders we have for each product 
+-- here we use the group by because it is a simple calculation and we dont want other things or to maintain level of details
+select productid, count(sales) as total_orders from sales.orders group by productid
+
+-- but if we use window func it gives each productid seperate row which makes no sense according to the question because it gives level of details which we dont want according to the question 
+select productid, count(sales) over(partition by productid) from sales.orders
+
+select * from sales.orders
+
+
+-- Q. find the total number of orders
+select count(*) as total_orders from sales.orders 
+
+select count(sales) as total_orders from sales.orders
+
+
+-- Q. find the total number of orders additionally provide details orderid, orderdate 
+select orderid, orderdate, count(*) over() as total_orders from sales.orders 
+
+-- Q. find the total number of orders, total number of orders for each customer additionally provide details orderid, orderdate 
+select customerid, orderid, orderdate,count(*) over() as total_orders, count(*) over(partition by customerid) as orderbycustomers from sales.orders
+
+
+-- Q. find the total number of customers additionally provide all the customer details 
+select *, count(*) over() as total_customers from sales.customers
+
+-- Q. find the total number of scores for the customers additionally provide all the customer details 
+-- here we need to find the rows of a specific column score so when we are dealing with the column
+-- while using the count() we need to keep in mind that the column may have the null values 
+-- to avoid incorrect insights we need to handle the null values so to get the proper insights we need to use the count(column)
+-- it will ignore the null values present in the column so we need to remember that count(column) ignores the null rows and counts other rows
+select *,count(*) over() as total_customers, count(score) over() as total_scores from sales.customers
+-- here the null value row is ignored so we got the result 4 rows instead of 5 
