@@ -6,10 +6,35 @@
 -- we have to be careful if we are using where clause with window functions because we get the wrong results if we are not applying correctly 
 -- these are same as group by but the level of calculations grouping the data and we dont lose level of details when performing these functions 
 -- that means when we use the group by func we combine all the similar data to one row and we do aggregations 
+
 -- so here when we use group by since it combines them to one row we are missing other rows the number of rows are decreased since we grouped them
 -- so to maintain the number of rows even if we group them then we need to use the window functions 
 -- so window functions perform the aggregations entirely but we show the data in each row without merging or combining the same data 
 -- so it performs same as group by but the aggregations value will be shown to all the rows without missing any number of rows 
+-- ex: 
+id    name    sales
+1    john      20
+2    sam       10
+3    jason     5
+4    john      8
+5    sam       15
+
+-- so now if we use the group by the result will be look like this 
+john    28
+sam     25
+jason   5
+-- so here we are not getting other rows and not getting all the columns and also we cannot able to use other columns which are not aggregated or group by
+
+-- so if we use the window function here we will get all the details without losing anything 
+-- o/p:
+id    name    sales
+1    john      28       -- got aggregated value same for id 4 also 
+2    sam       25       -- got aggregated value same for id 5 also 
+3    jason     5        -- we dont have another value so we got the same thing 
+4    john      28
+5    sam       25
+
+
 
 -- when to use group by and window functions ?
 -- if we want to perform simple aggregations then we use group by
@@ -17,7 +42,7 @@
 
 
 -- WINDOW FUNCTIONS                                         GROUP BY (only aggregate functions)
--- aggrgations functions (accepts numeric datatypes)        -- aggrgations functions                   
+-- aggrgations functions (accepts numeric datatypes)        -- aggregations functions                   
 -- COUNT(all data types)                                    -- COUNT(all data types)   
 -- SUM()                                                    -- SUM()
 -- AVG()                                                    -- AVG()
@@ -48,6 +73,8 @@
 -- lets do some tasks
 
 -- Q. find the total sales across all orders
+select * from sales.orders 
+
 select sum(sales) as total_sales from sales.orders      -- we can simply use sum()
 
 
@@ -56,6 +83,12 @@ select productid, sum(sales) as total_sales from sales.orders group by productid
 
 
 -- Q. find the total sales across all orders by each product additionally show the orderid, and orderdate
+-- lets say we want to see the order details also in the table like order id and order date when it is ordered or like for that day how many sales 
+
+
+
+
+
 select productid,orderid, orderdate, sum(sales) as total_sales from sales.orders group by productid, orderid, orderdate
 -- here we see the total sales are not calculated properly because group by have the other columns also which breaks the total sales calculations
 -- we cannot do both the aggregations and the columns to show because it will perform grouping for all the mentioned columns
@@ -409,3 +442,103 @@ select *, count(*) over() as total_customers from sales.customers
 -- it will ignore the null values present in the column so we need to remember that count(column) ignores the null rows and counts other rows
 select *,count(*) over() as total_customers, count(score) over() as total_scores from sales.customers
 -- here the null value row is ignored so we got the result 4 rows instead of 5 
+
+
+-- DATA QUALITY CHECK 
+-- we can use the count() to know whether it has any duplicates values or not 
+
+-- Q. check whether the table orders contain any duplicate values 
+-- since we need to find the duplicates present or not we simply do the count() for the primary key in the table 
+-- since the primary does not have any duplicates but in some cases we take the data from multiple sources so in that 
+-- they may have the duplicate values so to check that we use the count(column) for primary key 
+select orderid,count(orderid) over(partition by orderid) as duplicate_values from sales.orders     -- here the orders table dont have any duplicate values 
+-- so here the value is 1 which means we dont have any duplicate values if the value is >1 means that orderid have duplicates
+
+-- so for table sales.ordersarchive lets check does it have or not
+select orderid,count(orderid) over(partition by orderid) as duplicate_values from sales.ordersarchive     
+-- here the value is greater than 1 and some of them have value 1 so to get only the duplicate values we use the sub query 
+
+select * from (select orderid,count(orderid) over(partition by orderid) as duplicate_values from sales.ordersarchive) as t where duplicate_values > 1     
+-- now we got the duplicate values 
+
+
+
+
+-- SUM()
+-- it is used to do the addition of all the values within a window and it ignores the null values and only accepts the numeric values
+
+
+-- Q. find the total sales across all orders, find total sales for each product, additionally provide details such as orderid, orderdate
+select orderid, orderdate,productid,sales, sum(sales) over() as total_sales, sum(sales) over(partition by productid) as total_sales_by_product from sales.orders
+
+
+-- Q. find the percentage contribution of each product sales to the total sales 
+-- percentage contribution = product sales / total sales * 100
+select orderid, orderdate, sales, sum(sales) over() as total_sales, sales / sum(sales) over() * 100 as percentage from sales.orders
+-- we got "zero" in the value because the data type is integer so to get the float or decimal values we change the data type using cast() and to get two decimals we use round to avoid more decimals
+select orderid, orderdate, sales, sum(sales) over() as total_sales, round(cast(sales as float) / sum(sales) over() * 100, 2) as percentage from sales.orders
+
+
+
+
+-- AVG()
+-- it is used to perform avg within a window 
+-- so while working with the null values first we need to change the null value to zero to avoid incorrect insights
+-- because if null values are avoided then the avg will be incorrect 
+-- so we change the null to zero to do this we use the coalesce() 
+
+-- Q. find the avg sales across all the orders, 
+select avg(sales) as avg_sales from sales.orders
+
+-- Q. find the avg sales for each product additionally provide details such as orderid, orderdate 
+select orderid, orderdate, productid,sales, avg(sales) over(partition by productid) as avg_sales_by_product from sales.orders
+
+-- Q. find avg scores of customers additionally provide details such as customerid, lastname 
+select customerid, lastname, score,avg(score) over() as scorewithnull, avg(coalesce(score, 0)) over() as scorewithoutnull from sales.customers
+
+
+-- Q. find all orders where sales are higher than avg sales across all the orders 
+select * from (
+select orderid, sales, avg(sales) over() as avg_sales from sales.orders 
+) as t where sales > avg_sales
+
+
+
+-- MIN() AND MAX()
+-- MIN() returns the lowest value within a window
+-- MAX() returns the highest value within a window 
+-- MIN AND MAX() ignores the null values 
+-- so to handle null values we replace it with zero but 
+-- for MAX() we dont get any issues because zero is not maximum value
+-- but for MIN() we get the 0 will be the minimum value which we changed the null to zero 
+
+-- Q. find the highest and the lowest sales across all the orders additionally provide details such as orderid, orderdate
+select orderid, orderdate,sales, max(sales) over() as max_sales, min(sales) over() as min_sales from sales.orders
+
+
+-- Q. find the highest and the lowest sales across all the orders for each product additionally provide details such as orderid, orderdate
+select orderid, orderdate,productid, sales, max(sales) over(partition by productid) as max_sales, min(sales) over(partition by productid) as min_sales from sales.orders
+
+
+-- Q. show the employee who have the highest salaries
+select * from sales.employees
+
+select * from (select *, max(salary) over() as max_salary from sales.employees) as t where salary = max_salary
+
+
+-- Q. calculate the deviation of the each sale from both min and max sales amounts from orders 
+-- deviation means the sales - min(sales) and max(sales) - sales 
+
+select orderid, orderdate, sales, min(sales) over() as min_sales, max(sales) over() as max_sales,
+sales - min(sales) over() as deviationMin, max(sales) over() - sales as deviationMax
+from sales.orders 
+
+
+
+-- Q. calculate the moving average sales for each product over time 
+select orderid, orderdate,productid, sales, avg(sales) over (partition by productid order by orderdate) as mvgtime from sales.orders
+
+-- Q. calculate the moving average sales for each product over time, including only next order 
+-- which means each window will have two rows current row and the next row
+select orderid, orderdate,productid, sales, avg(sales) over (partition by productid order by orderdate rows between current row and 1 following) as mvgtime from sales.orders
+
