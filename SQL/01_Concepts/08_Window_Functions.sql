@@ -542,3 +542,132 @@ select orderid, orderdate,productid, sales, avg(sales) over (partition by produc
 -- which means each window will have two rows current row and the next row
 select orderid, orderdate,productid, sales, avg(sales) over (partition by productid order by orderdate rows between current row and 1 following) as mvgtime from sales.orders
 
+
+
+
+-- RANKING WINDOW FUNCTIONS
+-- the ORDER BY is MANDATORY when we are working with ranking functions 
+-- the FRAME CLAUSE is NOT ALLOWED in the ranking functions 
+
+-- to rank the data we first sort the data and we have two types of ranking 
+-- 1. integer based ranking                -- 2. percentage based ranking 
+-- rank()                                   -- cume_dist()
+-- dense_rank()                             -- percent_rank()
+-- row_number()
+-- ntile()
+
+
+-- 1. integer based ranking is used when we wank to find like the top 3 ranks or the integer value results
+-- ROW_NUMBER()
+-- assigns a unique number to each row 
+-- it doesn't handle ties means if we have the same value that means the duplicate then it cannot rank the same number for that values instead it gives seperate rank 
+-- it does not have gaps like skipping the ranks it gives continuous ranks 
+
+-- Q. find the orders based on their sales from highest to lowest 
+select orderid, sales, row_number() over (order by sales desc) from sales.orders
+
+
+
+-- RANK()
+-- assign a rank to each row
+-- it handle the ties means if the two rows or more having the same value then it assign the same rank to those rows 
+-- it assigns with gaps that means it skips the rank number if we have the same values
+-- like the first row and second row have the same value they both will rank as 1 
+-- now the third row is different value and now the rank number will be 3 because the second row is assigned with 1 value
+-- so the rank 2 is skipped so if have same values it takes the same rank and the next rank will be the number of same rows + current rank 
+-- ex: 
+-- id   sales   rank 
+-- 8	90	    1
+-- 4	90	    1
+-- 10	60	    2
+-- number of same rows excluding the current rank = 1 and current rank = 1   so return 1 + 1 = 2 will be the third row 
+
+-- Q. find the orders based on their sales from highest to lowest 
+select orderid, sales, rank() over (order by sales desc) from sales.orders
+
+
+
+-- DENSE_RANK()
+-- it assign rank for each row 
+-- it handle same values and assign them same rank 
+-- it assigns the rank without gaps which means if we have the same values then the next row will be the next rank instead of same rank
+-- it donot skip the ranks it go in the sequence wise 
+
+-- Q. find the orders based on their sales from highest to lowest 
+select orderid, sales, dense_rank() over (order by sales desc) from sales.orders
+
+
+
+-- Q. select the top highest sales for each product
+select * from (
+select orderid,productid, sales, row_number() over(partition by productid order by sales desc) as top_rank 
+from sales.orders) as t where top_rank = 1 
+
+
+-- Q. find the lowest two customers based on their total sales 
+select * from (
+select customerid, sum(sales) as total_sales, row_number() over(order by sum(sales)) as ranked_sales
+from sales.orders group by customerid) as t where ranked_sales <= 2
+
+
+
+-- Q. assign unique ids to the rows of the tables orders Archive table
+-- lets say we have a table that dont have any primary key and to make the table to use we create a column that has unique values 
+-- so in this case we can use the row_number() 
+select * from sales.OrdersArchive
+-- her the orderid have the duplicate values so we use the row_number() to have a unique values column
+select row_number() over(order by orderid) as unq_id, * from sales.OrdersArchive
+
+
+
+-- we can also use row_number for identifying the duplicate values
+-- Q. identify duplicate rows in the orderarchive table and return a clean result without duplicates
+select * from (
+select row_number() over(partition by orderid order by creationtime desc) as unq_data, * 
+from sales.OrdersArchive) as t where unq_data = 1
+
+-- if we want to find those duplicate values then we use > 1 it will show all the duplicate values
+select * from (
+select row_number() over(partition by orderid order by creationtime desc) as unq_data, * 
+from sales.OrdersArchive) as t where unq_data > 1
+
+
+
+-- NTILE()
+-- it is used to divide the rows into buckets and also it accepts numeric value which decides how many buckets we want
+-- buckets = no.of rows/no.of buckets 
+-- each bucket needs to have atleast 2 rows to call it as one bucket
+-- ex: we want to divide the rows into two buckets then we can use ntile like this NTILE(2) here 2 says the no.of buckets we want
+-- so if we have the even no.of rows in the table we can easily calculate but
+-- when we have the odd no.of rows in the table sql calculates like take the large no.of rows as one bucket and other will be another bucket 
+-- ex: we have 5 rows in a table we do like ntile(2) then 
+-- no.of rows = 5 and no.of buckets = 2 we want so 5/2 = 2.5 so now the sql takes 3 rows as one bucket and 2 rows as another bucket
+select sales,ntile(2) over(order by sales) as two_buckets from sales.orders 
+
+select sales,ntile(2) over(order by sales) as two_buckets,ntile(3) over(order by sales) as three_buckets  from sales.orders 
+-- here no.of rows = 10 and no.of buckets = 3   so 10/3 = 3.3 so first bucket will have 4 rows and remainig will have 3 rows each
+
+select sales,ntile(2) over(order by sales) as two_buckets,ntile(3) over(order by sales) as three_buckets, ntile(4) over(order by sales) as four_buckets  from sales.orders 
+-- here no.of rows = 10 and no.of buckets = 3   so 10/4 = 2.5 
+-- so first, second buckets will have 3 rows and third and fourth buckets will have 2 rows 
+-- it did not taken the 3 rows for third bucket because the fourth bucket will have only one row left and we dont call it as a bucket if we have < 2 rows so thats why the third bucket taken 2 rows and fourth bucket have 2 rows 
+
+-- why do we use ntile() what is the use case ?
+-- 1. data segmetation                  2. data equalizing 
+
+-- 1. data segmentation 
+-- we divide the values in buckets to create the categories for the table like high, medium, low sales 
+
+-- Q. segment all the orders in 3 categories: high, medium, low
+select *, case when buckets = 1 then 'High'
+when buckets = 2 then 'Medium'
+when buckets = 3 then 'Low'
+end as categories
+from (
+select orderid, customerid, sales, ntile(3) over(order by sales) as buckets from sales.orders) as t
+
+-- 2. data equalizing
+-- we can use it in while transfering the data from one database to another if we transfer the entire data at once then
+-- it  may break or fail and it takes so much time to transfer instead we divide the data into small groups and we transfer it 
+-- and after transfer we can use the union to combine the data 
+select orderid, productid, sales, ntile(3) over(order by sales) from sales.orders 
