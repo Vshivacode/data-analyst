@@ -671,3 +671,49 @@ select orderid, customerid, sales, ntile(3) over(order by sales) as buckets from
 -- it  may break or fail and it takes so much time to transfer instead we divide the data into small groups and we transfer it 
 -- and after transfer we can use the union to combine the data 
 select orderid, productid, sales, ntile(3) over(order by sales) from sales.orders 
+
+
+
+
+-- PERCENTAGE BASED RANKING FUNCTIONS
+-- 1. CUME_DIST()                2. PERCENT_RANK()
+
+-- 1. CUME_DIST() - cumulative_distribution()
+-- formula = current row position number/ no.of rows
+-- ex: we are in the first row and the table have 5 rows total 
+-- so the calculation will be current row position number so since we start from first row so the value = 1
+-- no.of rows = 5 
+-- so the calculation = 1/5 = 0.2
+-- so now we are in the second row so calculation = 2/5 =>  0.4
+-- and if we have the same values in the rows then it will take the below row of current row that means
+-- lets say we have 30 in third row and 30 in the fourth row also so 
+-- now we are in the 3rd row since we have the same values in the third and fourth sql takes the position number value to be 4 instead of 3 
+-- so for third row the calculation = 4/5 => 0.8 
+-- and for fourth it checks if the value is duplicated in next row then it takes the next value if not it will take that position number 
+-- so it takes the last occurrence of the same value 
+
+
+
+-- PERCENT_RANK()
+-- formula = current row position number - 1/ no.of rows - 1
+-- it is same as cume_dist() but it will take the first occurrence of the same value 
+-- so we are in first row 1 - 1 / 5 - 1 =  0/4   =>  0
+-- now we are in second row so the second row so 2-1 / 5-1 = 1/4 => 0.25
+-- now for third and fourth have same value so now it will take first occurrence position number 
+-- so we get 3 - 1/ 5-1 = 2/4 = 0.5   and for fourth we get same   3-1/5-1 = 2/4 = 0.25 because it takes first occurrence 
+
+
+-- find the products that fall within highest 40% of prices
+select * from (
+    select productid, price, cume_dist() over(order by price desc) as dist_rank 
+    from sales.products
+    )as t 
+where dist_rank <= 0.4
+
+-- we can format it to percentage 
+select *, concat(dist_rank * 100, '%')
+from (
+    select productid, price, cume_dist() over(order by price desc) as dist_rank 
+    from sales.products
+    )as t 
+where dist_rank <= 0.4
