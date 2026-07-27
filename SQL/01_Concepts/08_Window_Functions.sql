@@ -717,3 +717,134 @@ from (
     from sales.products
     )as t 
 where dist_rank <= 0.4
+
+
+
+-- VALUE WINDOW FUNCTIONS
+-- these are used to access values from another rows from the current row in a window without aggregating or reducing the rows 
+-- lag(expr, offset, default)  
+-- lead(expr, offset, default)
+-- first_value(expr)
+-- last_value(expr)
+-- nth_value(expr)
+-- order by is mandatory for value functions
+-- partition by is optional 
+-- frame clause is not allowed for lead() and lag() functions
+-- frame clause is optional for first_value()
+-- frame clause is recommended to use for last_value()
+
+
+-- LAG()
+-- returns the value from the previous row within a window
+-- ex: 
+-- | month    | sales | prev_sales |
+-- | -------- | ----- | ---------- |
+-- | January  | 12    | NULL       |
+-- | February | 24    | 12         |
+-- | March    | 18    | 24         |
+-- | April    | 32    | 18         |
+-- LAG(columnname, offset, default)
+-- columnname is required we cannot leave empty
+-- offset is optional and it means we tell sql, how many rows it needs to jump like if we set offset = 2 then it takes every second row and 
+-- if we dont set any offset then by default it will jump one row that means continuos without skipping any row
+-- default is optional and it means if we dont set any value then it will show the NULL value
+-- if we set default = 20 or no_value or any datatype then that will be shown in that row  
+-- select lag(sales) over (order by month) from table 
+-- so it will take the value from the previous row if we dont have the previous row then by default it returns the NULL value because we did not mentioned the default value
+
+-- ex: if we mention the the offset and default value then we get
+-- select lag(sales, 2, 0) over(order by month) from table
+-- | month    | sales | prev_sales |
+-- | -------- | ----- | ---------- |
+-- | January  | 12    | 0          |
+-- | February | 24    | 0          |
+-- | March    | 18    | 12         |
+-- | April    | 32    | 24         |
+-- here it will take jump to two rows and take that value, so for first row we dont have previous rows so by default it will get null value but since we mentioned the default value = 0 so it will return this 
+-- so for the third row we have a value which is the first row so it return the 12 value 
+
+
+
+-- LEAD() 
+-- returns the value from the next row within a window
+-- ex: 
+-- | month    | sales | prev_sales |
+-- | -------- | ----- | ---------- |
+-- | January  | 12    | NULL       |
+-- | February | 24    | 12         |
+-- | March    | 18    | 24         |
+-- | April    | 32    | 18         |
+-- LAG(columnname, offset, default)
+-- columnname is required we cannot leave empty
+-- offset is optional and it means we tell sql, how many rows it needs to jump like if we set offset = 2 then it takes every second row and 
+-- if we dont set any offset then by default it will jump one row that means continuos without skipping any row
+-- default is optional and it means if we dont set any value then it will show the NULL value
+-- if we set default = 20 or no_value or any datatype then that will be shown in that row  
+-- select lead(sales) over (order by month) from table 
+-- so it will take the value from the next row if we dont have the previous row then by default it returns the NULL value because we did not mentioned the default value
+
+-- ex: if we mention the the offset and default value then we get
+-- select lead(sales, 2, 0) over(order by month) from table
+-- | month    | sales | prev_sales |
+-- | -------- | ----- | ---------- |
+-- | January  | 12    | 18         |
+-- | February | 24    | 32         |
+-- | March    | 18    | 0          |
+-- | April    | 32    | 0          | 
+-- here it will take jump to two rows and take that value, so for first row we dont have next rows so by default it will get null value but since we mentioned the default value = 0 so it will return this 
+-- so for the third row we dont have next rows so it will take 0 value because we mentioned the default value = 0
+-- and for last row also same we dont any next rows so it return 0 value
+
+
+
+-- Q. analyse month over month performance by finding the percentage change in the sales between current and previous month
+
+-- means
+-- year over year = analysing the business growth increased or declined performance over time
+-- month over month = analysing the short term trends and patterns 
+
+select * from sales.orders
+
+select month(orderdate) as month, sum(sales) - lag(sum(sales)) over(order by month(orderdate)) as previous_sales from sales.orders group by month(orderdate)
+
+
+
+select *, total_current_month_sales - total_prev_month_sales as mom_sales,
+concat(round(cast((total_current_month_sales - total_prev_month_sales) as float)/total_prev_month_sales * 100, 1), '%') as mom_sales_in_percentage
+from 
+(
+select month(orderdate) as month_name, 
+sum(sales) as total_current_month_sales, 
+lag(sum(sales)) over(order by month(orderdate)) as total_prev_month_sales 
+from sales.orders group by month(orderdate)
+) t 
+
+
+
+-- Q. in order to analyse the customers loyalty, rank customers based on their average days between their orders 
+select day(orderdate), sum(sales) as current_day_sales, sum(sales) from sales.orders group by day(orderdate)
+
+
+-- customer retention analysis 
+-- it measures the customer behaviour and loyalty of the customers to the business and helps in building strong relationship with customers
+
+-- Q. find the customers loyalty by ranking the customers and finding the avg no.of orders made in between the orders 
+-- to analyse the customer loyalty we need to rank the customers and find out the average days between orders
+
+select * from sales.orders
+
+
+select 
+customerid, 
+avg(no_of_days_next_order) avg_orders, 
+rank() over(order by avg(no_of_days_next_order)) as rank_avg_orders
+from 
+(
+select 
+customerid, 
+orderdate as current_order,  
+lead(orderdate) over(partition by customerid order by orderdate) as next_order,
+datediff(day, orderdate, lead(orderdate) over(partition by customerid order by orderdate)) as no_of_days_next_order
+from sales.orders
+) t
+group by customerid   
