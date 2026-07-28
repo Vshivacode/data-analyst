@@ -848,3 +848,70 @@ datediff(day, orderdate, lead(orderdate) over(partition by customerid order by o
 from sales.orders
 ) t
 group by customerid   
+
+
+
+
+-- FIRST_VALUE() and LAST_VALUE()
+-- FIRST_VALUE():  access value from the first row within a window
+-- SECOND_VALUE(): access value from the last row within a window 
+-- ex:  first_value(sales) over (order by sales)
+-- | month    | sales | FIRST_VALUE() |
+-- | -------- | ----- | ---------- |
+-- | January  | 12    | 12         |        --  this is the first value of the table 
+-- | February | 24    | 12         |
+-- | March    | 18    | 12         |
+-- | April    | 32    | 12         |
+
+-- it gives the first_value for all the rows so by default it uses the frame clause to calculate 
+-- default frame clause is  rows between unbounded preceding and current_row
+
+-- ex: last_value(sales) over(order by sales)
+-- | month    | sales | LAST_VALUE() |
+-- | -------- | ----- | ---------- |
+-- | January  | 12    | 12         |
+-- | February | 24    | 24         |
+-- | March    | 18    | 18         |
+-- | April    | 32    | 32         |    -- we got wrong results because we need to get the last value for all the rows 
+
+-- when we are working with the last_value by default it takes the frame clause so the result will be wrong
+-- so this last_value() func does not do the proper calculation with the default frame cluase
+-- we need to specify the frame clause to get the correct results 
+-- default frame clause is  rows between unbounded preceding and current_row but 
+-- we are using last_value so the frame clause will be "rows between current row and unbounded following "
+-- here we are doing reverse to get the correct results 
+
+-- ex: last_value(sales) over(order by sales rows between unbounded following and current row)
+-- | month    | sales | LAST_VALUE() |
+-- | -------- | ----- | ---------- |
+-- | January  | 12    | 32         |
+-- | February | 24    | 32         |
+-- | March    | 18    | 32         |
+-- | April    | 32    | 32         |        --  this is the last value of the table 
+
+-- now we get the correct results last_value to all the rows from the table 
+-- or we can use the sort them in desc order it will also give the last_value result
+-- first_value(sales) over(order by sales desc)  this will give the same result as last_value(sales) over(order by sales rows between unbounded following and current row)
+-- we simple change the order then we get the same result as with frame clause 
+
+-- Q. find the lowest and highest sales for each product 
+select productid, sales,
+first_value(sales) over(partition by productid order by sales) as lowest_sales,
+last_value(sales) over(partition by productid order by sales rows between current row and unbounded following) as highest_sales_using_frame_clause,
+first_value(sales) over(partition by productid order by sales desc) as highest_sales_using_desc_order
+from sales.orders
+
+-- or we can simply use like this also without first and last value 
+select productid, 
+min(sales) over(partition by productid) as lowest_sales, 
+max(sales) over(partition by productid) as highest_sales 
+from sales.orders
+
+
+-- Q. find the difference between the current sales and the lowest sales for each product 
+select productid, sales,
+first_value(sales) over(partition by productid order by sales) as lowest_sales,
+last_value(sales) over(partition by productid order by sales rows between current row and unbounded following) as highest_sales_using_frame_clause,
+first_value(sales) over(partition by productid order by sales desc) as highest_sales_using_desc_order,
+sales - first_value(sales) over(partition by productid order by sales) as diff_sales
+from sales.orders
