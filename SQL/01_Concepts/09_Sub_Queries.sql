@@ -45,3 +45,87 @@
 -- table subquery
 -- it returns multiple rows with multiple columns as a result
 -- ex: select * from sales.orders
+
+
+
+-- SUBQUERY IN FROM CLAUSE
+-- how to use subquery in from clause ?
+-- the subquery behaves like a temporary table and we use this table for the main query and it is only usable by main query
+-- it creates a derived table means it is a temporary table we use this to perform calculations and aggregations 
+-- it is not stored in the database and it is used by main query only 
+
+-- first sql executes the subquery and sql take the values from the subquery and use it in the main query and we show the result 
+
+-- select col1, col2, col3,....
+-- from (select column from table2 where condition) as alias
+
+
+-- find the products that have a price higher than the avg price of all products 
+-- it means productprice > avg(product price)
+
+select * from sales.Products
+
+select * from 
+(
+    select 
+    productid, 
+    price,
+    avg(price) over() as avg_price 
+    from sales.products
+) t 
+where price > avg_price
+
+
+
+-- Q. rank customers based on their total amount of sales 
+
+select *, 
+rank() over(order by total_sales desc) customers_rank from
+(
+    select 
+    customerid, 
+    sum(sales) as total_sales 
+    from sales.orders 
+    group by customerid
+) as t
+
+
+-- how database executes the subqueries in the backend
+-- so user runs the subquery and sql sends the request to the database engine
+-- it identifies and retrieve the data and store the data in the cache 
+-- now from main query executed so it will take the data from the subquery which we stored in the cache
+-- and after taking the data sql will remove the data from the cache memory 
+
+
+
+-- SUBQUERY IN SELECT CLAUSE 
+-- so we use the subquery inside the select clause as a column not as table as we used earlier for from clause 
+-- previously we use the subquery as entire table and we use that table for doing some aggregations and other operations 
+-- but in select clause we use subquery as a column so the value will be included to the main query table 
+-- so the result of the subquery will be treated as a column and added to the main query table 
+
+-- IMPORTANT: so now the subquery result must be scalar subquery means the result to be one row and one column
+-- IMPORTANT: we can also use different tables also in one sql query means we can use different tables in subquery so the main query table can be different and subquery can be different 
+
+-- we can use aggregation functions, constants, anything that results in one row and one column
+-- non-aggregates like (select 'ACTIVE') as status 
+-- ex: SELECT
+--    product,
+--    price,
+--    (SELECT 'ACTIVE') AS status
+-- FROM sales.products;
+
+-- multiple rows and columns are NOT allowed like this 
+-- ex: select orderdate, sales, (select column1, column2, column3 from table) as result from sales.orders
+
+
+-- Q. find productid, names, prices and total no.of orders
+select * from sales.orders
+
+select productid, product, price, (select count(*) from sales.orders) as no_of_orders from sales.products 
+
+
+-- this cannot be done as it throws error because in subquery productid is non aggregated column so it will give multiple rows  
+select productid, product, price,(select ProductID from sales.orders) as totalorders 
+from sales.products
+
