@@ -129,3 +129,74 @@ select productid, product, price, (select count(*) from sales.orders) as no_of_o
 select productid, product, price,(select ProductID from sales.orders) as totalorders 
 from sales.products
 
+
+
+-- SUBQUERY IN JOIN CLAUSE
+-- when we want to perform some aggregations on a table and then we combine the aggregated result to another table to get meaningful information using  
+-- subquery with join will be useful 
+
+-- Q. show all the customer details and find the total no.of orders for each customer 
+
+select * from sales.customers
+
+select customerid, count(*) as totalorders from sales.orders group by customerid
+-- here we are getting multiple rows and multiple columns so now we use the joins here 
+
+-- we use left join so that we wont miss any customer details present in customer table
+
+select c.*, o.totalorders from sales.customers as c
+left join (
+    select customerid, count(*) as totalorders 
+    from sales.orders group by customerid
+) as o 
+on c.customerid = o.customerid 
+
+
+
+
+-- SUBQUERY IN WHERE CLAUSE
+-- we are using the subquery for filtering for main query
+
+-- Q. find the products that price is higher than the avg prices of products 
+
+select productid, product, price,
+(select avg(price) from sales.products) as avg_price, 
+-- avg(price) over() as avg_price  
+from sales.products 
+where price >  
+(
+    select avg(price) from sales.products
+)
+-- CHECK THIS 
+-- here avg(price) over() as avg_price VS (select avg(price) from sales.products) as avg_price result are different
+-- (select avg(price) from sales.products) as avg_price  it will give the avg price of all prices
+-- but avg(price) over() as avg_price  this will give the result different we get the avg price of the condition 
+-- so it will calculate the avg prices of the where clause condition 
+-- so prices > avg(price)   values are calculated by this avg(price) over() as avg_price
+-- instead of the actual prices because WINDOW FUNCTIONS ARE CALCULATED AFTER WHERE CLAUSE means after the condition they do calculations on the condition 
+
+
+
+-- subquery with IN operator
+-- so using the in operator main advantage is that it shows multiple rows and one column with the subquery 
+-- it is like checking from the list of items
+
+-- Q. show the details of the orders made by customers in germany
+select * from sales.orders
+
+select * from sales.customers where country = 'germany'    -- now we use this result in the main query
+
+-- here we use the in operator and checking the customerid so that we can get all the customers with germany 
+select * from sales.orders where customerid in 
+(
+select customerid from sales.customers where country = 'germany'
+)
+
+
+-- Q. show the details of the orders made by customers NOT IN germany
+-- we have to find the customers orders except germany so we dont want germany country
+-- we use NOT IN OPERATOR 
+select * from sales.orders where customerid not in  
+(
+select customerid from sales.customers where country = 'germany'
+)
