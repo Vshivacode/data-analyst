@@ -200,3 +200,73 @@ select * from sales.orders where customerid not in
 (
 select customerid from sales.customers where country = 'germany'
 )
+
+
+-- SUBQUERY WITH ANY
+-- it checks if atleast one value matches from any values within a list
+-- same as in but the advantage of ANY is we can COMBINE it with COMPARISON OPERATORS like =, =>, <=, >, < 
+-- ex: where id = any (),   where id >= any (), .... etc
+-- so when we want to perform the conditions using where clause for the subquery which gives multiple rows 
+-- then we can use the  ANY so it allow the subquery can have multiple rows and we can do the where conditions inside the subquery
+
+
+-- Q. find the female employees whose salaries are greater than any of male employees salary 
+select * from sales.employees
+
+select FirstName, gender, salary 
+from sales.employees 
+where gender =  'f' and salary > any (select salary from sales.employees where gender =  'm')
+-- here the subquery have multiple rows so since we are using the ANY we can do now without any errors
+
+-- When to Use ANY
+-- When subquery returns multiple rows
+-- When you need comparison logic, not just equality
+-- When IN is too limited
+
+
+-- SUBQUERY WITH ALL 
+-- it checks if all the values are matching to the all the rows if all the conditions are true
+-- if any one value are not matching then the entire result will be false 
+-- if we have 5 rows and one row is not mathching then it wont display any rows it show empty table because one value is not matching
+
+-- Q. find the female employees whose salaries are greater than all male employees salary
+-- we need to check whether female employees salary greater than all the male employees 
+select FirstName, gender, salary 
+from sales.employees 
+where gender =  'f' and salary > all (select salary from sales.employees where gender =  'm')
+
+
+
+-- DEPENDANCY SUBQUERIES
+-- 1. NON-CORRELATED SUBQUERY            2. CORRELATED SUBQUERY
+
+-- 1. NON-CORRELATED SUBQUERY
+-- what we did with subqueries previously all comes in the non-correlated subquery
+-- so the subqueries are independent from the main query
+-- so this is how the sql executes while using the independent subquery
+-- so first sql executes the subquery and from that we use it in the main query to show the data 
+-- so the subquery can be anything we are just using that in the main query 
+
+
+-- 2. CORRELATED SUBQUERY 
+-- so when it comes to this correlated subquery it is dependent on the main query
+-- so this is how sql executes
+-- so first it will execute the main query then from that main query the subquery will be executed
+-- so in the result we see the data from the subquery
+-- and it is completely dependent on the main query 
+
+
+-- Q. show all the customer details and find the total orders for each customer 
+-- previously we did it as non-correlated subquery
+select c.*,total_orders 
+from sales.customers c 
+left join 
+(select customerid, count(*) as total_orders from sales.orders group by customerid) as o 
+on c.customerid = o.customerid
+
+-- now we do it as correlated subquery 
+select *, 
+(select count(*) from sales.orders o where c.customerid = o.customerid) as total_orders
+from sales.customers c
+-- here we are connecting the main query table inside the subquery using where
+-- now the subquery is dependent on the main query 
