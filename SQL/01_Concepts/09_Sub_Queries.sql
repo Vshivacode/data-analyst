@@ -270,3 +270,33 @@ select *,
 from sales.customers c
 -- here we are connecting the main query table inside the subquery using where
 -- now the subquery is dependent on the main query 
+
+
+
+-- EXISTS WITH SUBQUERY 
+-- exists are same as IN operator in functionality wise but in it will execute differently
+-- so it checks values that are present in other or not 
+-- so if we are working with large data sets then we can use exists instead of IN 
+-- the performance is fast then compared with IN because EXISTS stops as soon as a value is found
+-- and it can be useful when we are working with null values with correlated subquery 
+-- because it executes row by row so the other rows are not effected if any of them have null values 
+-- but when we are using the IN then it will run and if we have nulls then it dont return any rows and no stops so performance 
+-- exists are mainly used for the correlated subqueries 
+
+
+-- Q. show the details of the orders where country is germany
+-- we can do like this non-correlated subquery 
+select * from sales.orders o where customerid in (select customerid from sales.customers c where country = 'germany')
+
+-- we can do with correlated subquery 
+select * from sales.orders o where exists (select customerid from sales.customers c where country = 'germany' and c.customerid = o.customerid)
+
+-- we can also use 1 instead of mentioning the column name or * because exists check the existence of the values instead of actual dataselect * from sales.orders o where exists (select customerid from sales.customers c where country = 'germany' and c.customerid = o.customerid)
+select * from sales.orders o where exists (select 1 from sales.customers c where country = 'germany' and c.customerid = o.customerid)
+-- not only 1 we can use any value 
+
+
+-- we can also find the customers who are not germany 
+-- we use NOT operator 
+select * from sales.orders o where not exists (select 1 from sales.customers c where country = 'germany' and c.customerid = o.customerid)
+
