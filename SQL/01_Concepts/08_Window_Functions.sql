@@ -84,6 +84,11 @@ select productid, sum(sales) as total_sales from sales.orders group by productid
 
 -- Q. find the total sales across all orders by each product additionally show the orderid, and orderdate
 -- lets say we want to see the order details also in the table like order id and order date when it is ordered or like for that day how many sales 
+select productid,orderid, sum(sales) as total_sales from sales.orders group by productid, orderid
+-- so it combines productid + orderid means it treats both as one single value and if we have any rows
+-- where both column values match then that will be grouped as one row if not it treats as seperate 
+-- so now we need to use the window functions here
+select productid,orderid, sum(sales) over(partition by productid) as total_sales from sales.orders
 
 
 
