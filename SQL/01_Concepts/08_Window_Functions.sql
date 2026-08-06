@@ -115,7 +115,17 @@ select orderid, orderdate,productid, sum(sales) over(partition by productid) as 
 
 -- ex: sum(sales) over(partition by productid order by orderdate rows unbounded preceding )
 
+-- we can also use case statements with the aggregate functions like 
+-- sum(case when score > 100 and score < 150 then sales end) it means we are calculation only those values 
 
+select sales from sales.orders order by sales
+
+select sum(case when sales > 10 and sales < 25 then sales end ) as segment_sales from sales.orders
+
+-- we can also use the where clause instead of this 
+select sum(sales) as segment_sales from sales.orders where sales > 10 and sales < 25
+
+select count()
 
 
 -- OVER() clause 
