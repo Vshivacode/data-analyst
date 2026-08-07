@@ -80,27 +80,76 @@ select sum(sales) as total_sales from sales.orders      -- we can simply use sum
 
 -- Q. find the total sales across all orders by each product
 select productid, sum(sales) as total_sales from sales.orders group by productid 
-
+-- o/p:
+productid	total_sales
+101	            140
+102	            105
+104	            75
+105	            60
 
 -- Q. find the total sales across all orders by each product additionally show the orderid, and orderdate
 -- lets say we want to see the order details also in the table like order id and order date when it is ordered or like for that day how many sales 
 select productid,orderid, sum(sales) as total_sales from sales.orders group by productid, orderid
+-- o/p:
+productid	orderid	total_sales
+101	            1	    10
+102	            2	    15
+101	            3	    20
+105	            4	    60
+104	            5	    25
+104	            6	    50
+102	            7	    30
+101	            8	    90
+101	            9	    20
+102	            10  	60
+
 -- so it combines productid + orderid means it treats both as one single value and if we have any rows
 -- where both column values match then that will be grouped as one row if not it treats as seperate 
 -- so now we need to use the window functions here
 select productid,orderid, sum(sales) over(partition by productid) as total_sales from sales.orders
-
-
-
-
+-- o/p: 
+productid	orderid	total_sales
+101	            1	    140
+101	            3	    140
+101	            8	    140
+101	            9	    140
+102	            10  	105
+102	            2	    105
+102	            7	    105
+104	            5	    75
+104	            6	    75
+105	            4	    60
 
 select productid,orderid, orderdate, sum(sales) as total_sales from sales.orders group by productid, orderid, orderdate
 -- here we see the total sales are not calculated properly because group by have the other columns also which breaks the total sales calculations
 -- we cannot do both the aggregations and the columns to show because it will perform grouping for all the mentioned columns
+--o/p:
+productid	orderid	orderdate	total_sales
+101	            1	2025-01-01	    10
+102	            2	2025-01-05	    15
+101	            3	2025-01-10	    20
+105	            4	2025-01-20	    60
+104	            5	2025-02-01	    25
+104	            6	2025-02-05	    50
+102	            7	2025-02-15	    30
+101	            8	2025-02-18	    90
+101	            9	2025-03-10	    20
+102	            10	2025-03-15  	60
 
 -- now in this case we need to perform grouping to only the sales column so to do this we need to use the window functions
 select orderid, orderdate,productid, sum(sales) over(partition by productid) as total_sales_each_product from sales.orders
-
+-- o/p:
+orderid	orderdate	productid	total_sales_each_product
+1	    2025-01-01	    101	            140
+3	    2025-01-10	    101	            140
+8	    2025-02-18	    101	            140
+9	    2025-03-10	    101	            140
+10	    2025-03-15	    102	            105
+2	    2025-01-05	    102	            105
+7	    2025-02-15	    102	            105
+5	    2025-02-01	    104	            75
+6	    2025-02-05	    104	            75
+4	    2025-01-20	    105	            60
 
 
 
@@ -121,11 +170,17 @@ select orderid, orderdate,productid, sum(sales) over(partition by productid) as 
 select sales from sales.orders order by sales
 
 select sum(case when sales > 10 and sales < 25 then sales end ) as segment_sales from sales.orders
+-- o/p:
+segment_sales
+55
+
 
 -- we can also use the where clause instead of this 
 select sum(sales) as segment_sales from sales.orders where sales > 10 and sales < 25
+-- o/p:
+segment_sales
+55
 
-select count()
 
 
 -- OVER() clause 
@@ -140,7 +195,18 @@ select count()
 select sum(sales) over(partition by productid order by orderdate rows unbounded preceding) from sales.orders 
 
 select orderid, sales, sum(sales) over() from sales.orders
-
+-- o/p:
+orderid	sales	(No column name)
+1	      10	        380
+2	      15	        380
+3	      20	        380
+4	      60	        380
+5	      25	        380
+6	      50	        380
+7	      30	        380
+8	      90	        380
+9	      20	        380
+10	      60	        380
 
 -- Q. find the product prices greater than the avg price including the columns productid, orderid, price,avg price
 -- if the product price greater than the avg price show "EXPENSIVE"
@@ -159,6 +225,14 @@ select
         when price = avg(price) over() then 'NEUTRAL' 
     end as price_category
 from sales.products
+-- o/p:
+productid	product	price	avg_price	price_category
+101	        Bottle	  10	    20	        CHEAP
+102	        Tire	  15	    20	        CHEAP
+103	        Socks	  20	    20	        NEUTRAL
+104	        Caps	  25	    20	        EXPENSIVE
+105	        Gloves	  30	    20	        EXPENSIVE
+
 
 
 -- WITH PARTITION BY CLAUSE
@@ -166,24 +240,68 @@ from sales.products
 -- so if we do the sum(sales) over(partition by productid) then it will create seperate windows for each product id that means 
 -- for each product it will have the total sales and that value will be shown to that window only
 select orderid, orderdate,productid, sum(sales) over(partition by productid) as total_sales_each_product from sales.orders
-
+-- o/p:
+orderid	orderdate	productid	total_sales_each_product
+1	    2025-01-01	    101	                140
+3	    2025-01-10	    101	                140
+8	    2025-02-18	    101	                140
+9	    2025-03-10	    101	                140
+10	    2025-03-15	    102	                105
+2	    2025-01-05	    102	                105
+7	    2025-02-15	    102	                105
+5	    2025-02-01	    104	                75
+6	    2025-02-05	    104	                75
+4	    2025-01-20	    105	                60
 
 -- WITHOUT PARTITION BY CLAUSE
 -- so if we dont specify any clause in the over() clause then it will give the entire aggregated column value to all
 -- the rows same value to all the rows 
 -- in this we have only one window because we did not mentioned in over() clause 
 select sum(sales) over() from sales.orders     -- it will give the sum(sales)  and return the same result for all the rows
-
+-- o/p:
+(No column name)
+380
+380
+380
+380
+380
+380
+380
+380
+380
+380
 
 
 -- Q. find the total sales of the orders additionally provide details of the orderid and orderdate
 select orderid, orderdate, sum(sales) over () as total_sales from sales.orders 
-
+-- o/p:
+orderid	orderdate	total_sales
+1	    2025-01-01	    380
+2	    2025-01-05	    380
+3	    2025-01-10	    380
+4	    2025-01-20	    380
+5	    2025-02-01	    380
+6	    2025-02-05	    380
+7	    2025-02-15	    380
+8	    2025-02-18	    380
+9	    2025-03-10	    380
+10	    2025-03-15	    380
 
 -- Q. find the total sales for each product of the orders additionally provide details of the orderid and orderdate
 select orderid, orderdate, productid, sum(sales) over (partition by productid) as total_sales_each_product from sales.orders 
 -- here we can see 4 windows so for each product since we have 4 different products so we have 4 windows and each window use seperate aggregations
-
+-- o/p:
+orderid	orderdate	productid	total_sales_each_product
+1	    2025-01-01	    101	                140
+3	    2025-01-10	    101	                140
+8	    2025-02-18	    101	                140
+9	    2025-03-10	    101	                140
+10	    2025-03-15	    102	                105
+2	    2025-01-05	    102	                105
+7	    2025-02-15	    102	                105
+5	    2025-02-01	    104	                75
+6	    2025-02-05	    104	                75
+4	    2025-01-20	    105	                60
 
 
 -- Q. find the total sales for each combination of product and order status 
@@ -194,6 +312,18 @@ select sales, productid, orderstatus, sum(sales) over (partition by productid, o
 -- here it is doing the two groupings so one is for productid and other is for orderstatus 
 -- which means first it will group all the rows accoring to the productid and then 
 -- it will group the rows according to the orderstatus 
+-- o/p:
+sales	productid	orderstatus	  product_wise_orderstatus
+10	        101	     Delivered	            30
+20	        101	     Delivered	            30
+90	        101	     Shipped	            110
+20	        101	     Shipped	            110
+30	        102	     Delivered	            30
+60	        102	     Shipped	            75
+15	        102	     Shipped	            75
+25	        104	     Delivered	            75
+50	        104	     Delivered	            75
+60	        105	     Shipped	            60
 
 
 
