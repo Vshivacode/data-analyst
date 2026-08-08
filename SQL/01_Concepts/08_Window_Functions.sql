@@ -334,13 +334,35 @@ sales	productid	orderstatus	  product_wise_orderstatus
 -- so for rank functins and value functions ORDER BY is MANDATORY because without this it doesnt make any sense
 select sales, productid, orderstatus, sum(sales) over (partition by productid, orderstatus order by sales) as product_wise_orderstatus from sales.orders 
 -- here we have 6 windows so the each window is sorted asc according to productid and orderstatus 
-
+-- o/p: 
+sales	productid	orderstatus	product_wise_orderstatus
+10	        101	     Delivered	        10
+20	        101	     Delivered	        30
+20	        101	     Shipped	        20
+90	        101	     Shipped	        110
+30	        102	     Delivered	        30
+15	        102	     Shipped	        15
+60	        102	     Shipped	        75
+25	        104	     Delivered	        25
+50	        104	     Delivered	        75
+60	        105	     Shipped	        60
 
 -- Q. rank each order based on the sales from highest to lowest including the details of the orderid, orderdate
 -- select orderid, orderdate,sales, rank() over(order by sales desc) from sales.orders
 
 select orderid, orderdate,sales, rank() over (order by sales desc) from sales.orders
-
+-- o/p:
+orderid	orderdate	sales	(No column name)
+8	    2025-02-18	  90	        1
+4	    2025-01-20	  60	        2
+10	    2025-03-15	  60	        2
+6	    2025-02-05	  50	        4
+7	    2025-02-15	  30	        5
+5	    2025-02-01	  25	        6
+9	    2025-03-10	  20	        7
+3	    2025-01-10	  20	        7
+2	    2025-01-05	  15	        9
+1	    2025-01-01	  10	        10
 
 -- WINDOW FRAME CLAUSE
 -- the partition by creates windows according to the aggregations so in the same way the frame clause will create another window inside a window like nested if we are using the partition by only 
@@ -414,14 +436,90 @@ INSERT INTO sales.monthly_sales (id, month, sales) VALUES
 
 
 select * from sales.monthly_sales
+-- o/p:
+id	month	sales
+1	January	12
+2	February	24
+3	March	18
+4	April	32
+5	May	44
+6	June	26
+7	July	38
+8	August	40
+9	September	22
+10	October	48
+11	November	36
+12	December	28
+13	January	18
+14	January	24
+15	January	32
+16	March	20
+17	May	28
+18	May	42
+19	August	16
+20	August	22
+21	August	48
+22	November	14
+23	December	26
+24	December	38
 
 -- since we are not using partition by it will take the entire column as one window and it will do the aggregations
 select month, sales, sum(sales) over (order by sales rows between unbounded preceding and current row) from sales.monthly_sales
-
+-- o/p:
+month	sales	(No column name)
+January	12	12
+November	14	26
+August	16	42
+January	18	60
+March	18	78
+March	20	98
+August	22	120
+September	22	142
+February	24	166
+January	24	190
+June	26	216
+December	26	242
+December	28	270
+May	28	298
+January	32	330
+April	32	362
+November	36	398
+July	38	436
+December	38	474
+August	40	514
+May	42	556
+May	44	600
+October	48	648
+August	48	696
 
 -- if we use the partition by month then it will create the windows and if we use the frame clause then it will take rows within that window 
 select month, sales, sum(sales) over (partition by month order by sales rows between unbounded preceding and current row) from sales.monthly_sales
-
+-- o/p:
+month	sales	(No column name)
+April	32	32
+August	16	16
+August	22	38
+August	40	78
+August	48	126
+December	26	26
+December	28	54
+December	38	92
+February	24	24
+January	12	12
+January	18	30
+January	24	54
+January	32	86
+July	38	38
+June	26	26
+March	18	18
+March	20	38
+May	28	28
+May	42	70
+May	44	114
+November	14	14
+November	36	50
+October	48	48
+September	22	22
 
 
 -- ROWS BETWEEN UNBOUNDED PRECEDING AND 2 FOLLOWING
