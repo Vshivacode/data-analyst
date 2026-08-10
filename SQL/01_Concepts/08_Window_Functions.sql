@@ -528,19 +528,95 @@ September	22	22
 -- now we are in the second row so it will take the first row + second row (current row) + third row + fourth row
 -- now we are in third row so it will take first row + second row + third row(current row) + fourth row + fifth row
 select month, sales, sum(sales) over (order by sales rows between unbounded preceding and 2 FOLLOWING) from sales.monthly_sales
-
+-- o/p:
+month	sales	(No column name)
+January	12	42
+November	14	60
+August	16	78
+January	18	98
+March	18	120
+March	20	142
+August	22	166
+September	22	190
+February	24	216
+January	24	242
+June	26	270
+December	26	298
+December	28	330
+May	28	362
+January	32	398
+April	32	436
+November	36	474
+July	38	514
+December	38	556
+August	40	600
+May	42	648
+May	44	696
+October	48	696
+August	48	696
 
 -- ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 -- it means the it will take from the first row to  last row which means all the rows of that column same as doing the simply total sales 
 -- select sum(sales) from sales.monthly_sales
 
 select month, sales, sum(sales) over (order by sales rows between unbounded preceding and UNBOUNDED FOLLOWING) from sales.monthly_sales
-
+-- o/p:
+month	sales	(No column name)
+January	12	696
+February	24	696
+March	18	696
+April	32	696
+May	44	696
+June	26	696
+July	38	696
+August	40	696
+September	22	696
+October	48	696
+November	36	696
+December	28	696
+January	18	696
+January	24	696
+January	32	696
+March	20	696
+May	28	696
+May	42	696
+August	16	696
+August	22	696
+August	48	696
+November	14	696
+December	26	696
+December	38	696
 
 
 -- ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW 
 -- it means take the current row and take all the rows before the current row 
 select month, sales, sum(sales) over (order by sales rows between unbounded preceding and current row) from sales.monthly_sales
+-- o/p:
+month	sales	(No column name)
+January	12	12
+November	14	26
+August	16	42
+January	18	60
+March	18	78
+March	20	98
+August	22	120
+September	22	142
+February	24	166
+January	24	190
+June	26	216
+December	26	242
+December	28	270
+May	28	298
+January	32	330
+April	32	362
+November	36	398
+July	38	436
+December	38	474
+August	40	514
+May	42	556
+May	44	600
+October	48	648
+August	48	696
 
 
 -- ROWS BETWEEN 2 PRECEDING AND CURRENT ROW 
@@ -550,7 +626,32 @@ select month, sales, sum(sales) over (order by sales rows between unbounded prec
 -- now we are in third row  so it will take first row + second row + third (current row)
 -- now we are in fourth row so it will take second row + third row + fourth row (current row)
 select month, sales, sum(sales) over (order by sales rows between 2 preceding and CURRENT ROW) from sales.monthly_sales
-
+-- o/p:
+month	sales	(No column name)
+January	12	12
+November	14	26
+August	16	42
+January	18	48
+March	18	52
+March	20	56
+August	22	60
+September	22	64
+February	24	68
+January	24	70
+June	26	74
+December	26	76
+December	28	80
+May	28	82
+January	32	88
+April	32	92
+November	36	100
+July	38	106
+December	38	112
+August	40	116
+May	42	120
+May	44	126
+October	48	134
+August	48	140
 
 -- ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING 
 -- it means take 2 rows before current row and take 2 rows after current row
@@ -558,19 +659,98 @@ select month, sales, sum(sales) over (order by sales rows between 2 preceding an
 -- now we are in second row so it will take first row + second row(current row) + third row + fourth row + fifth row
 -- now we are in the third row so it will take first + second + third(current) + fourth + fifth 
 select month, sales, sum(sales) over (order by sales rows between 2 preceding and 2 FOLLOWING) from sales.monthly_sales
-
+-- o/p:
+month	sales	(No column name)
+January	12	42
+November	14	60
+August	16	78
+January	18	86
+March	18	94
+March	20	100
+August	22	106
+September	22	112
+February	24	118
+January	24	122
+June	26	128
+December	26	132
+December	28	140
+May	28	146
+January	32	156
+April	32	166
+November	36	176
+July	38	184
+December	38	194
+August	40	202
+May	42	212
+May	44	222
+October	48	182
+August	48	140
 
 
 
 -- ROWS BETWEEN 2 PRECEDING AND UNBOUNDED FOLLOWING    (sql do reverse calculation)
 -- it means 2 rows before current row and goto all the rows to the end 
 select month, sales, sum(sales) over (order by sales rows between 2 preceding and UNBOUNDED FOLLOWING) from sales.monthly_sales
+-- o/p:
+month	sales	(No column name)
+October	48	140
+August	48	182
+May	44	222
+May	42	260
+August	40	298
+July	38	334
+December	38	366
+November	36	398
+January	32	426
+April	32	454
+December	28	480
+May	28	506
+December	26	530
+June	26	554
+February	24	576
+January	24	598
+September	22	618
+August	22	636
+March	20	654
+January	18	670
+March	18	684
+August	16	696
+November	14	696
+January	12	696
+
 -- so here the data we get will be in the reverse order like the sales will be arranged in the desc order 
 -- because sql takes the optimised calculations so by doing it from the bottom to first row it will be easier and fastest way to do the calculations 
 -- so thats why we get the data in the reverse calculation 
 -- so get in the proper order like we want the sales to be shown as lower to higher then we use order by sales asc at the end 
 -- we dont change inside the over() clause because it is used for the calculation purposes not for ordering the data 
 select month, sales, sum(sales) over (order by sales rows between 2 preceding and UNBOUNDED FOLLOWING) from sales.monthly_sales order by sales, month
+-- o/p:
+month	sales	(No column name)
+January	12	696
+November	14	696
+August	16	696
+January	18	670
+March	18	684
+March	20	654
+August	22	636
+September	22	618
+February	24	576
+January	24	598
+December	26	530
+June	26	554
+December	28	480
+May	28	506
+April	32	454
+January	32	426
+November	36	398
+December	38	366
+July	38	334
+August	40	298
+May	42	260
+May	44	222
+August	48	182
+October	48	140
+
 -- it will do like  last row(current row) + last second row + last third row + .......+ first row 
 -- now we are in last second row(current row) so it will do last row + last second row(current) + last third + last fourth + .........+ first row
 -- now we are in last third row(current row) so it will do last row + last second row + last third(current) + last fourth + .........+ first row
@@ -581,9 +761,61 @@ select month, sales, sum(sales) over (order by sales rows between 2 preceding an
 -- ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING    (sql do reverse calculation)
 -- it means current row goto all the rows  
 select month, sales, sum(sales) over (order by sales rows between current row and unbounded following) from sales.monthly_sales
+-- o/p:
+month	sales	(No column name)
+October	48	48
+August	48	96
+May	44	140
+May	42	182
+August	40	222
+July	38	260
+December	38	298
+November	36	334
+January	32	366
+April	32	398
+December	28	426
+May	28	454
+December	26	480
+June	26	506
+February	24	530
+January	24	554
+September	22	576
+August	22	598
+March	20	618
+January	18	636
+March	18	654
+August	16	670
+November	14	684
+January	12	696
+
 -- it do the calculation in reverse and display the data in reverse so to get it properly displayed we use order by at the end
 select month, sales, sum(sales) over (order by sales rows between current row and unbounded following) from sales.monthly_sales order by sales
-
+-- o/p:
+month	sales	(No column name)
+January	12	696
+November	14	684
+August	16	670
+January	18	636
+March	18	654
+March	20	618
+September	22	576
+August	22	598
+February	24	530
+January	24	554
+December	26	480
+June	26	506
+December	28	426
+May	28	454
+January	32	366
+April	32	398
+November	36	334
+July	38	260
+December	38	298
+August	40	222
+May	42	182
+May	44	140
+October	48	48
+August	48	96
 
 select * from sales.monthly_sales
 
@@ -591,6 +823,33 @@ select * from sales.monthly_sales
 -- ROWS BETWEEN CURRENT ROW AND THE 2 FOLLOWING 
 -- it means take current row and take 2 rows after current row 
 select month,sales, sum(sales) over (order by sales rows between current row and 2 following) from sales.monthly_sales
+-- o/p:
+month	sales	(No column name)
+January	12	42
+November	14	48
+August	16	52
+January	18	56
+March	18	60
+March	20	64
+August	22	68
+September	22	70
+February	24	74
+January	24	76
+June	26	80
+December	26	82
+December	28	88
+May	28	92
+January	32	100
+April	32	106
+November	36	112
+July	38	116
+December	38	120
+August	40	126
+May	42	134
+May	44	140
+October	48	96
+August	48	48
+
 -- it calculates forward does not do the reverse calculation
 -- so now we are in first row (current row) + second row + third row
 -- now are in second row (current row) it will take second (current) + third + fourth 
@@ -602,35 +861,32 @@ select month,sales, sum(sales) over (order by sales rows between current row and
 -- it is of no use because it will give the same values that sales have since we are doing the current row itself 
 -- so it did not change any value so no use of it
 select month,sales, sum(sales) over (order by sales rows between current row and current row) from sales.monthly_sales
-
-
-
-
--- WINDOW FUNCTIONS 4 RULES 
--- FIRST RULE:  window functions only used in the select and order by we cannot do with other clauses 
--- select month,sales, sum(sales) over (partition by month) from sales.monthly_sales order by sum(sales) over (partition by month)
--- we used window func in the order by clause
--- we cannot do with other clauses like the where, group by, etc
-
--- SECOND RULE:  nesting window functions is not allowed 
--- we cannot add another window func in one window func 
--- ex: select month,sales, sum(sum(sales) over (partition by month)) over (partition by month) from sales.monthly_sales
-
--- THIRD RULE: sql window functions execute after where clause 
-
--- Q. find the total sales for each orderstatus only for two products 101 and 102
-select * from sales.orders
-
-select orderid,productid, orderstatus, sum(sales) over(partition by orderstatus) from sales.orders where productid = 101 or productid = 102 
-
-
--- FOURTH RULE: window functions can be used with the group by but only when we use the same column 
--- so here we use the same column name inside the over clause also so which means sum(sales) we used for group by 
--- same we use this inside the over() clause
--- not only the sum(sales) column we can use the other columns also which we are using for the group by like customerid also can be used inside the over() clause
--- Q. rank the customers based their total sales 
-select customerid, sum(sales) as total_sales, rank() over(order by sum(sales)) from sales.orders group by customerid
-
+-- o/p:
+month	sales	(No column name)
+January	12	12
+November	14	14
+August	16	16
+January	18	18
+March	18	18
+March	20	20
+August	22	22
+September	22	22
+February	24	24
+January	24	24
+June	26	26
+December	26	26
+December	28	28
+May	28	28
+January	32	32
+April	32	32
+November	36	36
+July	38	38
+December	38	38
+August	40	40
+May	42	42
+May	44	44
+October	48	48
+August	48	48
 
 
 
