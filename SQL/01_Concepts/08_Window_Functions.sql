@@ -213,6 +213,9 @@ orderid	sales	(No column name)
 -- if it is less than avg price then show 'CHEAP' 
 -- if price and avg price are same then show 'NEUTRAL' 
 
+select productid, avg(price) as avg_price from sales.products group by productid
+-- so here in this we cannot add the extra columns so we need to use the window functions here 
+
 -- here we can solve this using window functions only 
 select 
     productid, 
@@ -686,36 +689,35 @@ October	48	182
 August	48	140
 
 
-
 -- ROWS BETWEEN 2 PRECEDING AND UNBOUNDED FOLLOWING    (sql do reverse calculation)
 -- it means 2 rows before current row and goto all the rows to the end 
 select month, sales, sum(sales) over (order by sales rows between 2 preceding and UNBOUNDED FOLLOWING) from sales.monthly_sales
 -- o/p:
 month	sales	(No column name)
-October	48	140
-August	48	182
-May	44	222
-May	42	260
-August	40	298
-July	38	334
-December	38	366
-November	36	398
-January	32	426
-April	32	454
-December	28	480
-May	28	506
-December	26	530
-June	26	554
-February	24	576
-January	24	598
-September	22	618
-August	22	636
-March	20	654
-January	18	670
-March	18	684
-August	16	696
-November	14	696
-January	12	696
+October	   48	        140
+August	   48	        182
+May	       44	        222
+May	       42	        260
+August	   40	        298
+July	   38	        334
+December   38	        366
+November   36	        398
+January	   32	        426
+April	   32	        454
+December   28	        480
+May	       28	        506
+December   26	        530
+June	   26	        554
+February   24	        576
+January	   24	        598
+September  22      	    618
+August	   22	        636
+March	   20	        654
+January	   18	        670
+March	   18	        684
+August	   16	        696
+November   14	        696
+January	   12	        696
 
 -- so here the data we get will be in the reverse order like the sales will be arranged in the desc order 
 -- because sql takes the optimised calculations so by doing it from the bottom to first row it will be easier and fastest way to do the calculations 
