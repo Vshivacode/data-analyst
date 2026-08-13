@@ -330,6 +330,10 @@ sales	productid	orderstatus	  product_wise_orderstatus
 
 
 -- ORDER BY CLAUSE WITH WINDOW FUNCTIONS
+-- IMPORTANT NOTE: ORDER BY uses a default frame, so if we dont mention the frame clause,it uses this "unbounded preceding and current row" as default frame
+-- ex: select orderid, productid, sum(sales) over(partition by productid order by sales) from sales.orders
+-- here we did not mentioned the frame clause but sql still uses the default frame clause unbounded preceding and current row 
+
 -- order by used to sort the rows in asc or desc according to the partition wise so if we use partition it will 
 -- sort them accordingly so that each window is sorted seperately in asc or desc
 -- it will do the sorting within the window 
@@ -892,16 +896,20 @@ August	48	48
 
 
 -- WINDOW FUNCTIONS 4 RULES 
--- FIRST RULE:  window functions only used in the select and order by we cannot do with other clauses 
--- select month,sales, sum(sales) over (partition by month) from sales.monthly_sales order by sum(sales) over (partition by month)
--- we used window func in the order by clause
--- we cannot do with other clauses like the where, group by, etc
+-- FIRST RULE:  
+-- window functions only used in the select and order by we cannot use with other clauses like group by or where clause or any other 
+-- we can use like this 
+-- ex: select month,sales, sum(sales) over (partition by month) from sales.monthly_sales order by sum(sales) over (partition by month)
 
--- SECOND RULE:  nesting window functions is not allowed 
+
+-- SECOND RULE: 
+-- we cannot do nesting in window functions is not allowed 
 -- we cannot add another window func in one window func 
 -- ex: select month,sales, sum(sum(sales) over (partition by month)) over (partition by month) from sales.monthly_sales
 
--- THIRD RULE: sql window functions execute after where clause 
+
+-- THIRD RULE: 
+-- sql window functions execute after where clause, so first sql do filtering and next it apply window functions
 
 -- Q. find the total sales for each orderstatus only for two products 101 and 102
 select * from sales.orders
@@ -909,18 +917,22 @@ select * from sales.orders
 select orderid,productid, orderstatus, sum(sales) over(partition by orderstatus) from sales.orders where productid = 101 or productid = 102 
 -- o/p:
 orderid	productid	orderstatus	(No column name)
-3	101	Delivered	60
-7	102	Delivered	60
-1	101	Delivered	60
-2	102	Shipped	185
-8	101	Shipped	185
-9	101	Shipped	185
-10	102	Shipped	185
+3	       101	     Delivered	       60
+7	       102	     Delivered	       60
+1	       101	     Delivered	       60
+2	       102	     Shipped	       185
+8	       101	     Shipped	       185
+9	       101	     Shipped	       185
+10	       102	     Shipped	       185
 
--- FOURTH RULE: window functions can be used with the group by but only when we use the same column 
+
+
+-- FOURTH RULE: 
+-- window functions can be used with the group by also, but only when we use the same columns in group by and window functions 
 -- so here we use the same column name inside the over clause also so which means sum(sales) we used for group by 
 -- same we use this inside the over() clause
 -- not only the sum(sales) column we can use the other columns also which we are using for the group by like customerid also can be used inside the over() clause
+
 -- Q. rank the customers based their total sales 
 select customerid, sum(sales) as total_sales, rank() over(order by sum(sales)) from sales.orders group by customerid
 -- o/p:
