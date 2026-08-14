@@ -1059,8 +1059,9 @@ CustomerID	FirstName	LastName	Country	    Score	total_customers	  total_scores
 -- here the null value row is ignored so we got the result 4 rows instead of 5 
 
 
--- DATA QUALITY CHECK 
+-- DATA QUALITY CHECK
 -- we can use the count() to know whether it has any duplicates values or not 
+
 
 -- Q. check whether the table orders contain any duplicate values 
 -- since we need to find the duplicates present or not we simply do the count() for the primary key in the table 
