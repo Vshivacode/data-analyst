@@ -1059,22 +1059,52 @@ CustomerID	FirstName	LastName	Country	    Score	total_customers	  total_scores
 -- here the null value row is ignored so we got the result 4 rows instead of 5 
 
 
--- DATA QUALITY CHECK
+-- DATA QUALITY CHECK 
 -- we can use the count() to know whether it has any duplicates values or not 
-
 
 -- Q. check whether the table orders contain any duplicate values 
 -- since we need to find the duplicates present or not we simply do the count() for the primary key in the table 
 -- since the primary does not have any duplicates but in some cases we take the data from multiple sources so in that 
 -- they may have the duplicate values so to check that we use the count(column) for primary key 
 select orderid,count(orderid) over(partition by orderid) as duplicate_values from sales.orders     -- here the orders table dont have any duplicate values 
+-- o/p:
+orderid	duplicate_values
+1	            1
+2	            1
+3	            1
+4	            1
+5	            1
+6	            1
+7	            1
+8	            1
+9	            1
+10	            1
 -- so here the value is 1 which means we dont have any duplicate values if the value is >1 means that orderid have duplicates
 
 -- so for table sales.ordersarchive lets check does it have or not
 select orderid,count(orderid) over(partition by orderid) as duplicate_values from sales.ordersarchive     
+-- o/p:
+orderid	duplicate_values
+1	            1
+2	            1
+3	            1
+4	            2
+4	            2
+5	            1
+6	            3
+6	            3
+6	            3
+7	            1
 -- here the value is greater than 1 and some of them have value 1 so to get only the duplicate values we use the sub query 
 
 select * from (select orderid,count(orderid) over(partition by orderid) as duplicate_values from sales.ordersarchive) as t where duplicate_values > 1     
+-- o/p:
+orderid	duplicate_values
+4	        2
+4	        2
+6	        3
+6	        3
+6	        3
 -- now we got the duplicate values 
 
 
