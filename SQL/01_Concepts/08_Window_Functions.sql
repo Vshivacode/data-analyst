@@ -1116,14 +1116,49 @@ orderid	duplicate_values
 
 -- Q. find the total sales across all orders, find total sales for each product, additionally provide details such as orderid, orderdate
 select orderid, orderdate,productid,sales, sum(sales) over() as total_sales, sum(sales) over(partition by productid) as total_sales_by_product from sales.orders
-
+-- o/p:
+orderid	orderdate	productid	sales	total_sales	total_sales_by_product
+1	2025-01-01	101	10	380	140
+3	2025-01-10	101	20	380	140
+8	2025-02-18	101	90	380	140
+9	2025-03-10	101	20	380	140
+10	2025-03-15	102	60	380	105
+2	2025-01-05	102	15	380	105
+7	2025-02-15	102	30	380	105
+5	2025-02-01	104	25	380	75
+6	2025-02-05	104	50	380	75
+4	2025-01-20	105	60	380	60
 
 -- Q. find the percentage contribution of each product sales to the total sales 
 -- percentage contribution = product sales / total sales * 100
 select orderid, orderdate, sales, sum(sales) over() as total_sales, sales / sum(sales) over() * 100 as percentage from sales.orders
+-- o/p:
+orderid	orderdate	sales	total_sales	percentage
+1	2025-01-01	10	380	0
+2	2025-01-05	15	380	0
+3	2025-01-10	20	380	0
+4	2025-01-20	60	380	0
+5	2025-02-01	25	380	0
+6	2025-02-05	50	380	0
+7	2025-02-15	30	380	0
+8	2025-02-18	90	380	0
+9	2025-03-10	20	380	0
+10	2025-03-15	60	380	0
+
 -- we got "zero" in the value because the data type is integer so to get the float or decimal values we change the data type using cast() and to get two decimals we use round to avoid more decimals
 select orderid, orderdate, sales, sum(sales) over() as total_sales, round(cast(sales as float) / sum(sales) over() * 100, 2) as percentage from sales.orders
-
+-- o/p:
+orderid	orderdate	sales	total_sales	percentage
+1	2025-01-01	10	380	2.63
+2	2025-01-05	15	380	3.95
+3	2025-01-10	20	380	5.26
+4	2025-01-20	60	380	15.79
+5	2025-02-01	25	380	6.58
+6	2025-02-05	50	380	13.16
+7	2025-02-15	30	380	7.89
+8	2025-02-18	90	380	23.68
+9	2025-03-10	20	380	5.26
+10	2025-03-15	60	380	15.79
 
 
 
@@ -1138,16 +1173,40 @@ select avg(sales) as avg_sales from sales.orders
 
 -- Q. find the avg sales for each product additionally provide details such as orderid, orderdate 
 select orderid, orderdate, productid,sales, avg(sales) over(partition by productid) as avg_sales_by_product from sales.orders
+-- o/p:
+orderid	orderdate	productid	sales	avg_sales_by_product
+1	2025-01-01	101	10	35
+3	2025-01-10	101	20	35
+8	2025-02-18	101	90	35
+9	2025-03-10	101	20	35
+10	2025-03-15	102	60	35
+2	2025-01-05	102	15	35
+7	2025-02-15	102	30	35
+5	2025-02-01	104	25	37
+6	2025-02-05	104	50	37
+4	2025-01-20	105	60	60
+
 
 -- Q. find avg scores of customers additionally provide details such as customerid, lastname 
 select customerid, lastname, score,avg(score) over() as scorewithnull, avg(coalesce(score, 0)) over() as scorewithoutnull from sales.customers
-
+-- o/p:
+customerid	lastname	score	scorewithnull	scorewithoutnull
+1	Goldberg	350	625	500
+2	Brown	900	625	500
+3	NULL	750	625	500
+4	Schwarz	500	625	500
+5	Adams	NULL	625	500
 
 -- Q. find all orders where sales are higher than avg sales across all the orders 
 select * from (
 select orderid, sales, avg(sales) over() as avg_sales from sales.orders 
 ) as t where sales > avg_sales
-
+-- o/p:
+orderid	sales	avg_sales
+4	60	38
+6	50	38
+8	90	38
+10	60	38
 
 
 -- MIN() AND MAX()
@@ -1160,16 +1219,41 @@ select orderid, sales, avg(sales) over() as avg_sales from sales.orders
 
 -- Q. find the highest and the lowest sales across all the orders additionally provide details such as orderid, orderdate
 select orderid, orderdate,sales, max(sales) over() as max_sales, min(sales) over() as min_sales from sales.orders
-
+-- o/p:
+orderid	orderdate	sales	max_sales	min_sales
+1	2025-01-01	10	90	10
+2	2025-01-05	15	90	10
+3	2025-01-10	20	90	10
+4	2025-01-20	60	90	10
+5	2025-02-01	25	90	10
+6	2025-02-05	50	90	10
+7	2025-02-15	30	90	10
+8	2025-02-18	90	90	10
+9	2025-03-10	20	90	10
+10	2025-03-15	60	90	10
 
 -- Q. find the highest and the lowest sales across all the orders for each product additionally provide details such as orderid, orderdate
 select orderid, orderdate,productid, sales, max(sales) over(partition by productid) as max_sales, min(sales) over(partition by productid) as min_sales from sales.orders
-
+-- o/p:
+orderid	orderdate	productid	sales	max_sales	min_sales
+1	2025-01-01	101	10	90	10
+3	2025-01-10	101	20	90	10
+8	2025-02-18	101	90	90	10
+9	2025-03-10	101	20	90	10
+10	2025-03-15	102	60	60	15
+2	2025-01-05	102	15	60	15
+7	2025-02-15	102	30	60	15
+5	2025-02-01	104	25	50	25
+6	2025-02-05	104	50	50	25
+4	2025-01-20	105	60	60	60
 
 -- Q. show the employee who have the highest salaries
 select * from sales.employees
 
 select * from (select *, max(salary) over() as max_salary from sales.employees) as t where salary = max_salary
+-- o/p:
+EmployeeID	FirstName	LastName	Department	BirthDate	Gender	Salary	ManagerID	max_salary
+4	Michael	Ray	Sales	1977-02-10	M	90000	2	90000
 
 
 -- Q. calculate the deviation of the each sale from both min and max sales amounts from orders 
@@ -1178,15 +1262,50 @@ select * from (select *, max(salary) over() as max_salary from sales.employees) 
 select orderid, orderdate, sales, min(sales) over() as min_sales, max(sales) over() as max_sales,
 sales - min(sales) over() as deviationMin, max(sales) over() - sales as deviationMax
 from sales.orders 
-
+-- o/p:
+orderid	orderdate	sales	min_sales	max_sales	deviationMin	deviationMax
+1	2025-01-01	10	10	90	0	80
+2	2025-01-05	15	10	90	5	75
+3	2025-01-10	20	10	90	10	70
+4	2025-01-20	60	10	90	50	30
+5	2025-02-01	25	10	90	15	65
+6	2025-02-05	50	10	90	40	40
+7	2025-02-15	30	10	90	20	60
+8	2025-02-18	90	10	90	80	0
+9	2025-03-10	20	10	90	10	70
+10	2025-03-15	60	10	90	50	30
 
 
 -- Q. calculate the moving average sales for each product over time 
 select orderid, orderdate,productid, sales, avg(sales) over (partition by productid order by orderdate) as mvgtime from sales.orders
+-- o/p:
+orderid	orderdate	productid	sales	mvgtime
+1	2025-01-01	101	10	10
+3	2025-01-10	101	20	15
+8	2025-02-18	101	90	40
+9	2025-03-10	101	20	35
+2	2025-01-05	102	15	15
+7	2025-02-15	102	30	22
+10	2025-03-15	102	60	35
+5	2025-02-01	104	25	25
+6	2025-02-05	104	50	37
+4	2025-01-20	105	60	60
 
 -- Q. calculate the moving average sales for each product over time, including only next order 
 -- which means each window will have two rows current row and the next row
 select orderid, orderdate,productid, sales, avg(sales) over (partition by productid order by orderdate rows between current row and 1 following) as mvgtime from sales.orders
+-- o/p;
+orderid	orderdate	productid	sales	mvgtime
+1	2025-01-01	101	10	15
+3	2025-01-10	101	20	55
+8	2025-02-18	101	90	55
+9	2025-03-10	101	20	20
+2	2025-01-05	102	15	22
+7	2025-02-15	102	30	45
+10	2025-03-15	102	60	60
+5	2025-02-01	104	25	37
+6	2025-02-05	104	50	50
+4	2025-01-20	105	60	60
 
 
 
