@@ -1330,7 +1330,18 @@ orderid	orderdate	productid	sales	mvgtime
 
 -- Q. find the orders based on their sales from highest to lowest 
 select orderid, sales, row_number() over (order by sales desc) from sales.orders
-
+-- o/p:
+orderid	sales	(No column name)
+8	90	1
+4	60	2
+10	60	3
+6	50	4
+7	30	5
+5	25	6
+9	20	7
+3	20	8
+2	15	9
+1	10	10
 
 
 -- RANK()
@@ -1349,7 +1360,18 @@ select orderid, sales, row_number() over (order by sales desc) from sales.orders
 
 -- Q. find the orders based on their sales from highest to lowest 
 select orderid, sales, rank() over (order by sales desc) from sales.orders
-
+-- o/p:
+orderid	sales	(No column name)
+8	90	1
+4	60	2
+10	60	2
+6	50	4
+7	30	5
+5	25	6
+9	20	7
+3	20	7
+2	15	9
+1	10	10
 
 
 -- DENSE_RANK()
@@ -1360,13 +1382,30 @@ select orderid, sales, rank() over (order by sales desc) from sales.orders
 
 -- Q. find the orders based on their sales from highest to lowest 
 select orderid, sales, dense_rank() over (order by sales desc) from sales.orders
-
+-- o/p:
+orderid	sales	(No column name)
+8	90	1
+4	60	2
+10	60	2
+6	50	3
+7	30	4
+5	25	5
+9	20	6
+3	20	6
+2	15	7
+1	10	8
 
 
 -- Q. select the top highest sales for each product
 select * from (
 select orderid,productid, sales, row_number() over(partition by productid order by sales desc) as top_rank 
 from sales.orders) as t where top_rank = 1 
+-- o/p:
+orderid	productid	sales	top_rank
+8	101	90	1
+10	102	60	1
+6	104	50	1
+4	105	60	1
 
 
 -- Q. find the lowest two customers based on their total sales 
@@ -1382,7 +1421,18 @@ from sales.orders group by customerid) as t where ranked_sales <= 2
 select * from sales.OrdersArchive
 -- her the orderid have the duplicate values so we use the row_number() to have a unique values column
 select row_number() over(order by orderid) as unq_id, * from sales.OrdersArchive
-
+-- o/p:
+unq_id	OrderID	ProductID	CustomerID	SalesPersonID	OrderDate	ShipDate	OrderStatus	ShipAddress	        BillAddress	        Quantity	Sales	CreationTime
+2	        2	    102	        3	            3	    2024-04-05	2024-04-10	Shipped	    456 Elm St	        789 Billing St	        1	      15	2024-04-05 23:22:04.0000000
+3	        3	    101	        1	            4	    2024-04-10	2024-04-25	Shipped	    789 Maple St	    789 Maple St	        2	      20	2024-04-10 18:24:08.0000000
+4	        4	    105	        1	            3	    2024-04-20	2024-04-25	Shipped	    987 Victory Lane		                    2	      60	2024-04-20 05:50:33.0000000
+5	        4	    105	        1	            3	    2024-04-20	2024-04-25	Delivered	987 Victory Lane		                    2	      60	2024-04-20 14:50:33.0000000
+6	        5	    104	        2	            5	    2024-05-01	2024-05-05	Shipped	    345 Oak St	        678 Pine St	            1	      25	2024-05-01 14:02:41.0000000
+7	        6	    104	        3	            5	    2024-05-05	2024-05-10	Delivered	543 Belmont Rd.	    NULL	                2	      50	2024-05-06 15:34:57.0000000
+8	        6	    104	        3	            5	    2024-05-05	2024-05-10	Delivered	543 Belmont Rd.	    3768 Door Way	        2	      50	2024-05-07 13:22:05.0000000
+1	        1	    101	        2	            3	    2024-04-01	2024-04-05	Shipped	    123 Main St	        456 Billing St	        1	      10	2024-04-01 12:34:56.0000000
+9	        6	    101	        3	            5	    2024-05-05	2024-05-10	Delivered	543 Belmont Rd.	    3768 Door Way	        2	      50	2024-05-12 20:36:55.0000000
+10	        7	    102	        3	            5	    2024-06-15	2024-06-20	Shipped	    111 Main St	        222 Billing St	        0	      60	2024-06-16 23:25:15.0000000
 
 
 -- we can also use row_number for identifying the duplicate values
@@ -1390,12 +1440,26 @@ select row_number() over(order by orderid) as unq_id, * from sales.OrdersArchive
 select * from (
 select row_number() over(partition by orderid order by creationtime desc) as unq_data, * 
 from sales.OrdersArchive) as t where unq_data = 1
+-- o/p:
+unq_data	OrderID	ProductID	CustomerID	SalesPersonID	OrderDate	ShipDate	OrderStatus	ShipAddress	BillAddress	Quantity	Sales	CreationTime
+1	1	101	2	3	2024-04-01	2024-04-05	Shipped	123 Main St	456 Billing St	1	10	2024-04-01 12:34:56.0000000
+1	2	102	3	3	2024-04-05	2024-04-10	Shipped	456 Elm St	789 Billing St	1	15	2024-04-05 23:22:04.0000000
+1	3	101	1	4	2024-04-10	2024-04-25	Shipped	789 Maple St	789 Maple St	2	20	2024-04-10 18:24:08.0000000
+1	4	105	1	3	2024-04-20	2024-04-25	Delivered	987 Victory Lane		2	60	2024-04-20 14:50:33.0000000
+1	5	104	2	5	2024-05-01	2024-05-05	Shipped	345 Oak St	678 Pine St	1	25	2024-05-01 14:02:41.0000000
+1	6	101	3	5	2024-05-05	2024-05-10	Delivered	543 Belmont Rd.	3768 Door Way	2	50	2024-05-12 20:36:55.0000000
+1	7	102	3	5	2024-06-15	2024-06-20	Shipped	111 Main St	222 Billing St	0	60	2024-06-16 23:25:15.0000000
+
 
 -- if we want to find those duplicate values then we use > 1 it will show all the duplicate values
 select * from (
 select row_number() over(partition by orderid order by creationtime desc) as unq_data, * 
 from sales.OrdersArchive) as t where unq_data > 1
-
+-- o/p:
+unq_data	OrderID	ProductID	CustomerID	SalesPersonID	OrderDate	ShipDate	OrderStatus	ShipAddress	BillAddress	Quantity	Sales	CreationTime
+2	4	105	1	3	2024-04-20	2024-04-25	Shipped	987 Victory Lane		2	60	2024-04-20 05:50:33.0000000
+2	6	104	3	5	2024-05-05	2024-05-10	Delivered	543 Belmont Rd.	3768 Door Way	2	50	2024-05-07 13:22:05.0000000
+3	6	104	3	5	2024-05-05	2024-05-10	Delivered	543 Belmont Rd.	NULL	2	50	2024-05-06 15:34:57.0000000
 
 
 -- NTILE()
@@ -1408,14 +1472,51 @@ from sales.OrdersArchive) as t where unq_data > 1
 -- ex: we have 5 rows in a table we do like ntile(2) then 
 -- no.of rows = 5 and no.of buckets = 2 we want so 5/2 = 2.5 so now the sql takes 3 rows as one bucket and 2 rows as another bucket
 select sales,ntile(2) over(order by sales) as two_buckets from sales.orders 
+-- o/p:
+sales	two_buckets
+10	1
+15	1
+20	1
+20	1
+25	1
+30	2
+50	2
+60	2
+60	2
+90	2
 
 select sales,ntile(2) over(order by sales) as two_buckets,ntile(3) over(order by sales) as three_buckets  from sales.orders 
 -- here no.of rows = 10 and no.of buckets = 3   so 10/3 = 3.3 so first bucket will have 4 rows and remainig will have 3 rows each
+-- o/p:
+sales	two_buckets	three_buckets
+10	1	1
+15	1	1
+20	1	1
+20	1	1
+25	1	2
+30	2	2
+50	2	2
+60	2	3
+60	2	3
+90	2	3
+
 
 select sales,ntile(2) over(order by sales) as two_buckets,ntile(3) over(order by sales) as three_buckets, ntile(4) over(order by sales) as four_buckets  from sales.orders 
 -- here no.of rows = 10 and no.of buckets = 3   so 10/4 = 2.5 
 -- so first, second buckets will have 3 rows and third and fourth buckets will have 2 rows 
 -- it did not taken the 3 rows for third bucket because the fourth bucket will have only one row left and we dont call it as a bucket if we have < 2 rows so thats why the third bucket taken 2 rows and fourth bucket have 2 rows 
+-- o/p:
+sales	two_buckets	three_buckets	four_buckets
+10	1	1	1
+15	1	1	1
+20	1	1	1
+20	1	1	2
+25	1	2	2
+30	2	2	2
+50	2	2	3
+60	2	3	3
+60	2	3	4
+90	2	3	4
 
 -- why do we use ntile() what is the use case ?
 -- 1. data segmetation                  2. data equalizing 
@@ -1430,13 +1531,37 @@ when buckets = 3 then 'Low'
 end as categories
 from (
 select orderid, customerid, sales, ntile(3) over(order by sales) as buckets from sales.orders) as t
+-- o/p:
+orderid	customerid	sales	buckets	categories
+1	2	10	1	High
+2	3	15	1	High
+3	1	20	1	High
+9	2	20	1	High
+5	2	25	2	Medium
+7	1	30	2	Medium
+6	3	50	2	Medium
+4	1	60	3	Low
+10	3	60	3	Low
+8	4	90	3	Low
+
 
 -- 2. data equalizing
 -- we can use it in while transfering the data from one database to another if we transfer the entire data at once then
 -- it  may break or fail and it takes so much time to transfer instead we divide the data into small groups and we transfer it 
 -- and after transfer we can use the union to combine the data 
 select orderid, productid, sales, ntile(3) over(order by sales) from sales.orders 
-
+-- o/p:
+orderid	productid	sales	(No column name)
+1	101	10	1
+2	102	15	1
+3	101	20	1
+9	101	20	1
+5	104	25	2
+7	102	30	2
+6	104	50	2
+4	105	60	3
+10	102	60	3
+8	101	90	3
 
 
 
